@@ -1,4 +1,6 @@
 const SCOUTIQ_URL = "https://scoutiq-waitlist-launch.lovable.app";
+const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
+const EXT_KEY = "REPLACE_WITH_YOUR_EXT_API_KEY";
 const SUPABASE_URL = "https://nhrpopzpizapjsyifjuu.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ocnBvcHpwaXphcGpzeWlmanV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTk1MTEsImV4cCI6MjA5NjI5NTUxMX0.p-SJv8ywAdo5h9YFQ3szQPuFILsqWuR0_jBLZFe4FqQ";
@@ -25,14 +27,7 @@ async function init() {
   if (!tab?.id) return showNotProduct();
 
   const url = tab.url || "";
-  const isRetailerPage = [
-    "amazon.com", "amazon.co.uk", "amazon.ca",
-    "walmart.com", "bestbuy.com", "target.com",
-    "ebay.com", "newegg.com", "costco.com",
-    "homedepot.com", "wayfair.com",
-  ].some((d) => url.includes(d));
-
-  if (!isRetailerPage) return showNotProduct();
+  if (!url.startsWith("http")) return showNotProduct();
 
   // Ask content script for product info
   let productInfo = null;
@@ -93,7 +88,8 @@ async function fetchPrices(productName) {
 
   try {
     const res = await fetch(
-      `${SCOUTIQ_URL}/api/public/extension/compare?q=${encodeURIComponent(productName)}`,
+      `${SCRAPER_URL}/ext/compare?q=${encodeURIComponent(productName)}`,
+      { headers: { "x-ext-key": EXT_KEY } },
     );
     const json = await res.json();
 
