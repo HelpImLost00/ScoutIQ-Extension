@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScoutIQ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 380px;
+      min-height: 200px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      line-height: 1.4;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #222;
+      background: #0a0a0a;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #f0f0f0;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: #7c3aed;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-sm {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-sm:hover { opacity: 0.8; }
+    .btn-ghost { background: transparent; color: #888; border: 1px solid #333; }
+    .btn-primary { background: #7c3aed; color: #fff; }
+    .btn-success { background: #059669; color: #fff; }
+
+    /* Body */
+    .body { padding: 12px 14px; }
+
+    /* Product */
+    .product-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .product-image {
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      border: 1px solid #222;
+      object-fit: contain;
+      background: #1a1a1a;
+      flex-shrink: 0;
+    }
+    .product-image-placeholder {
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      border: 1px solid #222;
+      background: #1a1a1a;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .product-info { flex: 1; min-width: 0; }
+    .product-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f0f0f0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-source {
+      margin-top: 3px;
+      font-size: 11px;
+      color: #666;
+    }
+    .product-price {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    /* States */
+    .state {
+      text-align: center;
+      padding: 28px 14px;
+      color: #666;
+      font-size: 12px;
+    }
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #333;
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .results { display: flex; flex-direction: column; gap: 4px; }
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid #1e1e1e;
+      background: #141414;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .result-row:hover { border-color: #7c3aed44; background: #1a1220; }
+    .result-row.best { border-color: #059669; background: #052e1a; }
+    .retailer-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .badge-amazon { background: #7b3f0020; color: #f59e0b; }
+    .badge-walmart { background: #1d4ed820; color: #60a5fa; }
+    .badge-bestbuy { background: #78350f20; color: #fde68a; }
+    .badge-target  { background: #7f1d1d20; color: #fca5a5; }
+    .badge-ebay    { background: #06402920; color: #6ee7b7; }
+    .badge-newegg  { background: #4c1d9520; color: #c4b5fd; }
+    .badge-other   { background: #1c1c1c; color: #888; }
+    .result-name {
+      flex: 1;
+      font-size: 11px;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .result-price {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f0f0f0;
+      flex-shrink: 0;
+    }
+    .best .result-price { color: #34d399; }
+    .best-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #34d399;
+      background: #05281620;
+      border: 1px solid #05281640;
+      padding: 1px 5px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .external-icon { font-size: 10px; color: #555; flex-shrink: 0; }
+
+    /* Track section */
+    .track-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #1e1e1e;
+    }
+    .btn-track {
+      width: 100%;
+      padding: 9px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #7c3aed;
+      color: #fff;
+      transition: background 0.15s;
+    }
+    .btn-track:hover { background: #6d28d9; }
+    .btn-track:disabled { background: #3b2b6b; color: #888; cursor: default; }
+    .btn-track.tracked { background: #052e1a; color: #34d399; border: 1px solid #059669; }
+    .track-hint {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 10px;
+      color: #555;
+    }
+    .track-hint a { color: #7c3aed; text-decoration: none; }
+    .track-hint a:hover { text-decoration: underline; }
+
+    /* Auth */
+    .auth-section { padding: 4px 0; }
+    .auth-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #ddd; }
+    .field { margin-bottom: 8px; }
+    .field label { display: block; font-size: 11px; color: #777; margin-bottom: 4px; }
+    .field input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: #f0f0f0;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: #7c3aed; }
+    .auth-error {
+      font-size: 11px;
+      color: #f87171;
+      margin-bottom: 8px;
+      min-height: 16px;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 8px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #7c3aed;
+      color: #fff;
+    }
+    .btn-login:hover { background: #6d28d9; }
+    .auth-footer {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 10px;
+      color: #555;
+    }
+    .auth-footer a { color: #7c3aed; text-decoration: none; }
+    .divider { height: 1px; background: #1e1e1e; margin: 10px 0; }
+
+    /* Not a product page */
+    .not-product {
+      text-align: center;
+      padding: 24px 14px;
+    }
+    .not-product .icon { font-size: 28px; margin-bottom: 8px; }
+    .not-product p { font-size: 12px; color: #666; }
+    .not-product strong { color: #aaa; }
+
+    /* User bar */
+    .user-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      background: #0d0d0d;
+      border-top: 1px solid #1a1a1a;
+    }
+    .user-email { font-size: 10px; color: #555; }
+    .btn-signout {
+      font-size: 10px;
+      color: #555;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+    .btn-signout:hover { color: #f87171; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a class="logo" href="https://scoutiq-waitlist-launch.lovable.app/dashboard" target="_blank">
+    <div class="logo-icon">⚡</div>
+    ScoutIQ
+  </a>
+  <div class="header-actions">
+    <span id="signedInAs" style="font-size:10px;color:#555;display:none"></span>
+    <button class="btn-sm btn-ghost" id="btnSignOut" style="display:none" onclick="signOut()">Sign out</button>
+    <button class="btn-sm btn-primary" id="btnOpenApp" onclick="openApp()">Open app ↗</button>
+  </div>
+</div>
+
+<div class="body" id="mainBody">
+  <div class="state" id="stateLoading">
+    <div class="spinner"></div>
+    <div>Detecting product…</div>
+  </div>
+
+  <div id="stateNotProduct" class="not-product" style="display:none">
+    <div class="icon">🔍</div>
+    <p><strong>No product detected</strong></p>
+    <p style="margin-top:4px">Navigate to a product page on Amazon, Walmart, Best Buy, Target, eBay, or Newegg to see price comparisons.</p>
+  </div>
+
+  <div id="stateProduct" style="display:none">
+    <!-- Product row -->
+    <div class="product-row">
+      <div id="productImageWrap">
+        <div class="product-image-placeholder" id="productImagePlaceholder">🛒</div>
+        <img class="product-image" id="productImage" style="display:none" alt="" />
+      </div>
+      <div class="product-info">
+        <div class="product-name" id="productName">Loading…</div>
+        <div class="product-source" id="productSource"></div>
+        <div class="product-price" id="productCurrentPrice"></div>
+      </div>
+    </div>
+
+    <!-- Compare results -->
+    <div class="section-label">PRICES ACROSS THE WEB</div>
+    <div class="state" id="resultsLoading" style="padding:14px">
+      <div class="spinner"></div>
+      <div>Searching for prices…</div>
+    </div>
+    <div class="results" id="resultsList" style="display:none"></div>
+    <div class="state" id="resultsError" style="display:none; padding:14px; color:#f87171"></div>
+
+    <!-- Track section -->
+    <div class="track-section" id="trackSection" style="display:none">
+      <button class="btn-track" id="btnTrack" onclick="handleTrack()">
+        ♡ Track this product
+      </button>
+      <div class="track-hint" id="trackHint"></div>
+    </div>
+
+    <!-- Auth section (shown when user clicks Track but not signed in) -->
+    <div id="authSection" style="display:none" class="auth-section">
+      <div class="divider"></div>
+      <div class="auth-title">Sign in to track prices</div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@email.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()" />
+      </div>
+      <div class="auth-error" id="authError"></div>
+      <button class="btn-login" onclick="signIn()">Sign in</button>
+      <div class="auth-footer">
+        No account? <a href="https://scoutiq-waitlist-launch.lovable.app/signup" target="_blank">Sign up free ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

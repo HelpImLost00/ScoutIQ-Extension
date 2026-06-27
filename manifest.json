@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "ScoutIQ",
+  "version": "1.0.0",
+  "description": "See the best price and all-time low for any product — powered by ScoutIQ.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ScoutIQ Price Tracker"
+  },
+  "permissions": ["activeTab", "storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.co.uk/*",
+        "*://*.amazon.ca/*",
+        "*://*.walmart.com/*",
+        "*://*.bestbuy.com/*",
+        "*://*.target.com/*",
+        "*://*.ebay.com/*",
+        "*://*.newegg.com/*",
+        "*://*.costco.com/*",
+        "*://*.homedepot.com/*",
+        "*://*.wayfair.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "*://*.amazon.com/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.ca/*",
+    "*://*.walmart.com/*",
+    "*://*.bestbuy.com/*",
+    "*://*.target.com/*",
+    "*://*.ebay.com/*",
+    "*://*.newegg.com/*",
+    "*://*.costco.com/*",
+    "*://*.homedepot.com/*",
+    "*://*.wayfair.com/*",
+    "https://scoutiq-waitlist-launch.lovable.app/*",
+    "https://nhrpopzpizapjsyifjuu.supabase.co/*"
+  ]
+}
