@@ -310,7 +310,7 @@ const HTML = `
             <div class="sq-product-price" id="sq-product-price"></div>
           </div>
         </div>
-        <div class="sq-section-label">PRICES ACROSS THE WEB</div>
+        <div class="sq-section-label" id="sq-section-lbl">PRICES ACROSS THE WEB</div>
         <div class="sq-spinner" id="sq-spinner"></div>
         <div class="sq-results" id="sq-results" style="display:none"></div>
         <div class="sq-error" id="sq-error" style="display:none"></div>
@@ -371,10 +371,29 @@ async function loadSession() {
 }
 function saveSession(s) { chrome.storage.local.set({ sb_session: s }); session = s; }
 
+// ─── Pill enabled state ───────────────────────────────────────────────────────
+function isPillEnabled() {
+  return new Promise(r => chrome.storage.local.get(["sq_pill_on"], d => r(!!d.sq_pill_on)));
+}
+function setPillEnabled(val) {
+  return new Promise(r => chrome.storage.local.set({ sq_pill_on: val }, r));
+}
+
 // ─── Panel ────────────────────────────────────────────────────────────────────
 function openPanel() {
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
+  if (!productInfo) {
+    // Non-product page — show placeholder message
+    $("sq-product").style.display = "none";
+    $("sq-section-lbl").style.display = "none";
+    $("sq-spinner").style.display = "none";
+    $("sq-results").style.display = "none";
+    $("sq-track-section").style.display = "none";
+    $("sq-error").textContent = "Navigate to a product page to compare prices.";
+    $("sq-error").style.display = "";
+    return;
+  }
   if (compareResults.length === 0) fetchPrices();
 }
 function closePanel() {
@@ -384,6 +403,7 @@ function closePanel() {
 
 function renderProduct(info) {
   $("sq-product").style.display = "flex";
+  $("sq-section-lbl").style.display = "";
   $("sq-product-name").textContent = info.name;
   if (info.price) $("sq-product-price").textContent = `Listed at ${info.price}`;
   if (info.image) {
@@ -675,31 +695,56 @@ function inject(info) {
   // Restore saved position (async, non-blocking)
   loadStoredPos().then((pos) => applyPos(sqWrap, pos));
 
-  renderProduct(info);
+  // Render product info if we have it, otherwise pill is ready for non-product pages
+  if (info) renderProduct(info);
   injected = true;
 }
 
 // ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
-  if (!isProductPage()) return;
+  const enabled = await isPillEnabled();
+  if (!enabled) return;
 
-  const info = buildProductInfo();
-  if (!info) return;
-
+  // Gather product info if this is a product page; null otherwise
+  const info = isProductPage() ? (buildProductInfo() || null) : null;
   productInfo = info;
   compareResults = [];
   session = await loadSession();
   inject(info);
 }
 
-// Watch for SPA navigation (URL changes without full page reload)
+async function showPill() {
+  await setPillEnabled(true);
+  const info = isProductPage() ? (buildProductInfo() || null) : null;
+  productInfo = info;
+  compareResults = [];
+  session = await loadSession();
+  inject(info);
+}
+
+async function hidePill() {
+  await setPillEnabled(false);
+  const host = document.getElementById("__scoutiq__");
+  if (host) host.remove();
+  shadow = null;
+  injected = false;
+}
+
+// Watch for SPA navigation — re-inject with updated product info, keep pill visible
 let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
     injected = false;
-    // Wait for the new page's content to render
-    setTimeout(boot, 1200);
+    setTimeout(async () => {
+      const enabled = await isPillEnabled();
+      if (!enabled) return;
+      const info = isProductPage() ? (buildProductInfo() || null) : null;
+      productInfo = info;
+      compareResults = [];
+      session = await loadSession();
+      inject(info); // reinject so product info reflects new page
+    }, 1200);
   }
 });
 navObserver.observe(document.body || document.documentElement, {
@@ -714,10 +759,17 @@ if (document.readyState === "loading") {
   setTimeout(boot, 800);
 }
 
-// Respond to popup
+// Message handler — toggle from background.js icon click
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "GET_PRODUCT_INFO") {
     sendResponse(productInfo || buildProductInfo());
   }
-  return true;
+  if (msg.type === "TOGGLE_PILL") {
+    isPillEnabled().then(async (on) => {
+      if (on) await hidePill();
+      else await showPill();
+      sendResponse({ ok: true });
+    });
+  }
+  return true; // keep channel open for async response
 });
