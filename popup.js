@@ -77,6 +77,10 @@ function showProduct(info) {
     img.onerror = () => { img.style.display = "none"; };
     document.getElementById("productImagePlaceholder").style.display = "none";
   }
+
+  // Show Track button immediately — don't wait for compare results
+  document.getElementById("trackSection").style.display = "";
+  updateTrackButton();
 }
 
 // ─── Compare API ──────────────────────────────────────────────────────────────
@@ -84,7 +88,6 @@ async function fetchPrices(productName) {
   document.getElementById("resultsLoading").style.display = "";
   document.getElementById("resultsList").style.display = "none";
   document.getElementById("resultsError").style.display = "none";
-  document.getElementById("trackSection").style.display = "none";
 
   const wakeHint = setTimeout(() => {
     showResultsError("Waking up price server… first load takes ~30s.");
@@ -266,7 +269,7 @@ function signOut() {
 
 // ─── Track ────────────────────────────────────────────────────────────────────
 async function handleTrack() {
-  if (!currentProduct || currentResults.length === 0) return;
+  if (!currentProduct) return;
 
   if (!session) {
     document.getElementById("authSection").style.display = "";
@@ -275,6 +278,9 @@ async function handleTrack() {
   }
 
   const best = currentResults[0];
+  const retailer = best?.retailer || currentProduct.host || "Unknown";
+  const price = best?.price ?? parseFloat((currentProduct.price || "").replace(/[^0-9.]/g, "")) || null;
+  const trackUrl = best?.url || currentProduct.url;
   const btn = document.getElementById("btnTrack");
   btn.disabled = true;
   btn.textContent = "Adding…";
@@ -291,9 +297,9 @@ async function handleTrack() {
       body: JSON.stringify({
         user_id: session.user.id,
         product_name: currentProduct.name,
-        url: currentProduct.url,
-        retailer: best.retailer,
-        current_price: best.price,
+        url: trackUrl,
+        retailer,
+        current_price: price,
         currency: "USD",
         drop_threshold_pct: 5,
         scrape_status: "pending",

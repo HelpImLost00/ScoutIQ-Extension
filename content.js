@@ -5,7 +5,7 @@ const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4c2VnbnpwamJ4bXVuZm52YXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTU0OTcsImV4cCI6MjA5NjI5MTQ5N30.obX93Mxx_pZ3csXAVLW1j4fYT5wC0QM4um-8--nDryA";
 
-// â”€â”€â”€ Product detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Product detection ─────────────────────────────────────────────────────────
 function getMetaContent(property) {
   const el =
     document.querySelector(`meta[property="${property}"]`) ||
@@ -37,8 +37,8 @@ function isProductPage() {
   const search = location.search.toLowerCase();
   const host = location.hostname.replace("www.", "");
 
-  // â”€â”€ Hard exclusions (listing / search / category pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Search query params â€” almost always a results page
+  // ── Hard exclusions (listing / search / category pages) ──────────────────
+  // Search query params — almost always a results page
   if (/[?&](k|q|query|search|keyword|s)=/.test(search)) return false;
   // Common listing path segments
   if (/\/(search|results|browse|category|categories|collection|collections|department|shop\/all|sitesearch|find)/.test(path)) return false;
@@ -56,8 +56,8 @@ function isProductPage() {
   );
   if (productCards.length > 2) return false;
 
-  // â”€â”€ Positive signals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // og:type = product (very reliable â€” set per-item by every major retailer)
+  // ── Positive signals ──────────────────────────────────────────────────────
+  // og:type = product (very reliable — set per-item by every major retailer)
   if ((getMetaContent("og:type") || "").toLowerCase().includes("product")) return true;
 
   // schema.org @type: Product
@@ -173,7 +173,7 @@ function extractPrice() {
   for (const sel of priceSelectors) {
     const el = document.querySelector(sel);
     const txt = el?.getAttribute("content") || el?.getAttribute("data-price") || el?.textContent?.trim();
-    if (txt && /\$|Â£|â‚¬|\d/.test(txt)) return txt.slice(0, 20);
+    if (txt && /\$|£|€|\d/.test(txt)) return txt.slice(0, 20);
   }
   return null;
 }
@@ -214,7 +214,7 @@ function buildProductInfo() {
   };
 }
 
-// â”€â”€â”€ Shadow DOM Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shadow DOM Panel ──────────────────────────────────────────────────────────
 const CSS = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
   #sq-wrap {
@@ -295,12 +295,12 @@ const CSS = `
 
 const HTML = `
   <div id="sq-wrap">
-    <button id="sq-pill"><span>âš¡</span><span>Compare prices</span></button>
+    <button id="sq-pill"><span>⚡</span><span>Compare prices</span></button>
     <div id="sq-panel">
       <div class="sq-header" id="sq-header">
-        <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">âš¡</div>ScoutIQ</a>
-        <span class="sq-version">v1.2 Â· June 27 Â· 8:40 PM</span>
-        <button class="sq-close" id="sq-close">âœ•</button>
+        <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">⚡</div>ScoutIQ</a>
+        <span class="sq-version">v1.3 · June 27 · 9:05 PM</span>
+        <button class="sq-close" id="sq-close">✕</button>
       </div>
       <div class="sq-body">
         <div class="sq-product" id="sq-product" style="display:none">
@@ -315,23 +315,23 @@ const HTML = `
         <div class="sq-results" id="sq-results" style="display:none"></div>
         <div class="sq-error" id="sq-error" style="display:none"></div>
         <div class="sq-track-section" id="sq-track-section" style="display:none">
-          <button class="sq-btn-track" id="sq-btn-track">â™¡ Track this product</button>
+          <button class="sq-btn-track" id="sq-btn-track">♡ Track this product</button>
           <div class="sq-hint" id="sq-hint"></div>
         </div>
         <div class="sq-auth" id="sq-auth" style="display:none">
           <div class="sq-auth-title">Sign in to track prices</div>
           <div class="sq-field"><label>Email</label><input type="email" id="sq-email" placeholder="you@email.com" /></div>
-          <div class="sq-field"><label>Password</label><input type="password" id="sq-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" /></div>
+          <div class="sq-field"><label>Password</label><input type="password" id="sq-password" placeholder="••••••••" /></div>
           <div class="sq-auth-error" id="sq-auth-error"></div>
           <button class="sq-btn-login" id="sq-btn-login">Sign in</button>
-          <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free â†—</a></div>
+          <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free ↗</a></div>
         </div>
       </div>
     </div>
   </div>
 `;
 
-// â”€â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── State ────────────────────────────────────────────────────────────────────
 let shadow = null;
 let productInfo = null;
 let compareResults = [];
@@ -340,7 +340,7 @@ let injected = false;
 
 function $(id) { return shadow ? shadow.getElementById(id) : null; }
 
-// â”€â”€â”€ Session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Session ──────────────────────────────────────────────────────────────────
 async function loadSession() {
   return new Promise((resolve) => {
     chrome.storage.local.get(["sb_session"], async (r) => {
@@ -371,7 +371,7 @@ async function loadSession() {
 }
 function saveSession(s) { chrome.storage.local.set({ sb_session: s }); session = s; }
 
-// â”€â”€â”€ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Panel ────────────────────────────────────────────────────────────────────
 function openPanel() {
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
@@ -392,9 +392,12 @@ function renderProduct(info) {
     img.style.display = "";
     img.onerror = () => { img.style.display = "none"; };
   }
+  // Show Track button immediately — don't wait for compare results
+  $("sq-track-section").style.display = "";
+  updateTrackBtn();
 }
 
-// â”€â”€â”€ Compare â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Compare ──────────────────────────────────────────────────────────────────
 function fmtPrice(p) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(p);
 }
@@ -406,10 +409,10 @@ async function fetchPrices() {
   $("sq-error").style.display = "none";
   $("sq-track-section").style.display = "none";
 
-  // Show "waking up" hint after 4s â€” Render free tier cold starts take up to 45s
+  // Show "waking up" hint after 4s — Render free tier cold starts take up to 45s
   const wakeHint = setTimeout(() => {
     const err = $("sq-error");
-    if (err) { err.textContent = "Waking up price serverâ€¦ this takes ~30s on first use."; err.style.display = ""; }
+    if (err) { err.textContent = "Waking up price server… this takes ~30s on first use."; err.style.display = ""; }
   }, 4000);
 
   const controller = new AbortController();
@@ -469,12 +472,12 @@ function renderResults() {
   updateTrackBtn();
 }
 
-// â”€â”€â”€ Track â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Track ────────────────────────────────────────────────────────────────────
 function updateTrackBtn() {
   const btn = $("sq-btn-track");
   if (!btn) return;
   if (!session) {
-    btn.textContent = "â™¡ Track this product";
+    btn.textContent = "♡ Track this product";
     btn.disabled = false;
     btn.className = "sq-btn-track";
     $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/signup" target="_blank">Sign in or create a free account</a>`;
@@ -482,24 +485,28 @@ function updateTrackBtn() {
 }
 
 async function handleTrack() {
-  if (!compareResults.length) return;
-  if (!session) { $("sq-auth").style.display = ""; $("sq-email").focus(); return; }
-  const btn = $("sq-btn-track");
-  btn.disabled = true; btn.textContent = "Addingâ€¦";
+  if (!productInfo) return;
+  if (!session) { $(“sq-auth”).style.display = “”; $(“sq-email”).focus(); return; }
+  const btn = $(“sq-btn-track”);
+  btn.disabled = true; btn.textContent = “Adding…”;
+  // Use best compare result if available, otherwise fall back to current page data
   const best = compareResults[0];
+  const retailer = best?.retailer || productInfo.host || “Unknown”;
+  const price = best?.price ?? parseFloat((productInfo.price || “”).replace(/[^0-9.]/g, “”)) || null;
+  const trackUrl = best?.url || productInfo.url;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_products`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ user_id: session.user.id, product_name: productInfo.name, url: productInfo.url, retailer: best.retailer, current_price: best.price, currency: "USD", drop_threshold_pct: 5, scrape_status: "pending" }),
+      method: “POST”,
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, “Content-Type”: “application/json”, Prefer: “return=minimal” },
+      body: JSON.stringify({ user_id: session.user.id, product_name: productInfo.name, url: trackUrl, retailer, current_price: price, currency: “USD”, drop_threshold_pct: 5, scrape_status: “pending” }),
     });
-    if (res.status === 401) { session = null; chrome.storage.local.remove("sb_session"); $("sq-auth").style.display = ""; btn.disabled = false; btn.textContent = "â™¡ Track this product"; return; }
-    btn.className = "sq-btn-track sq-tracked"; btn.textContent = "âœ“ Tracked"; btn.disabled = true;
-    $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/dashboard" target="_blank">View in watchlist â†—</a>`;
-    $("sq-auth").style.display = "none";
+    if (res.status === 401) { session = null; chrome.storage.local.remove(“sb_session”); $(“sq-auth”).style.display = “”; btn.disabled = false; btn.textContent = “♡ Track this product”; return; }
+    btn.className = “sq-btn-track sq-tracked”; btn.textContent = “✓ Tracked”; btn.disabled = true;
+    $(“sq-hint”).innerHTML = `<a href=”${SCOUTIQ_URL}/dashboard” target=”_blank”>View in watchlist ↗</a>`;
+    $(“sq-auth”).style.display = “none”;
   } catch {
-    btn.disabled = false; btn.textContent = "â™¡ Track this product";
-    $("sq-hint").textContent = "Error â€” try again.";
+    btn.disabled = false; btn.textContent = “♡ Track this product”;
+    $(“sq-hint”).textContent = “Error — try again.”;
   }
 }
 
@@ -523,7 +530,7 @@ async function handleSignIn() {
   } catch { errEl.textContent = "Network error."; }
 }
 
-// â”€â”€â”€ Drag & position persistence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Drag & position persistence ─────────────────────────────────────────────
 async function loadStoredPos() {
   return new Promise(r => chrome.storage.local.get(["sq_pos"], d => r(d.sq_pos || null)));
 }
@@ -542,16 +549,14 @@ function applyPos(wrap, pos) {
   wrap.style.bottom = "auto";
 }
 
-function makeDraggable(handle, wrap) {
+function makeDraggable(handle, wrap, onDrop) {
   handle.addEventListener("mousedown", (e) => {
-    // Don't initiate drag from close button
     if (e.target.id === "sq-close" || e.button !== 0) return;
-    const startX = e.clientX;
-    const startY = e.clientY;
+    const startX = e.clientX, startY = e.clientY;
     const rect = wrap.getBoundingClientRect();
-    const offX = e.clientX - rect.left;
-    const offY = e.clientY - rect.top;
+    const offX = e.clientX - rect.left, offY = e.clientY - rect.top;
     let moved = false;
+    let hlImg = null; // currently highlighted drop-target image
 
     const onMove = (ev) => {
       if (!moved && Math.abs(ev.clientX - startX) < 5 && Math.abs(ev.clientY - startY) < 5) return;
@@ -566,18 +571,30 @@ function makeDraggable(handle, wrap) {
       wrap.style.top = top + "px";
       wrap.style.right = "auto";
       wrap.style.bottom = "auto";
+
+      // Highlight product image under cursor as a drop hint
+      if (onDrop) {
+        const under = document.elementsFromPoint(ev.clientX, ev.clientY);
+        const imgEl = under.find(el => el.tagName === "IMG" && !el.closest("#__scoutiq__") && el.naturalWidth > 60);
+        if (imgEl !== hlImg) {
+          if (hlImg) { hlImg.style.outline = ""; hlImg.style.borderRadius = ""; }
+          hlImg = imgEl || null;
+          if (hlImg) { hlImg.style.outline = "3px solid #7c3aed"; hlImg.style.borderRadius = "6px"; }
+        }
+      }
     };
 
-    const onUp = (ev) => {
+    const onUp = () => {
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
       handle.classList.remove("sq-dragging");
       document.body.style.userSelect = "";
+      if (hlImg) { hlImg.style.outline = ""; hlImg.style.borderRadius = ""; }
       if (moved) {
         const r = wrap.getBoundingClientRect();
         saveStoredPos(r.left, r.top);
-        // Swallow the click that fires right after mouseup so panel doesn't open/close
         handle.addEventListener("click", (e) => e.stopPropagation(), { capture: true, once: true });
+        if (onDrop && hlImg) onDrop(hlImg);
       }
     };
 
@@ -586,7 +603,39 @@ function makeDraggable(handle, wrap) {
   });
 }
 
-// â”€â”€â”€ Inject panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function handleImageDrop(imgEl) {
+  if (!imgEl) return;
+  const container = imgEl.closest(
+    "[data-asin], [data-item-id], [class*='product' i], article, li[class*='item' i]"
+  ) || imgEl.parentElement?.parentElement || imgEl.parentElement;
+  const nameEl = container?.querySelector(
+    "h2, h3, h4, [class*='title' i]:not(meta), [class*='ProductName' i], [class*='product-name' i], a[title]"
+  );
+  const priceEl = container?.querySelector("[class*='price' i]:not(del), [itemprop='price']");
+  const linkEl = imgEl.closest("a") || container?.querySelector("a");
+
+  const rawName = nameEl?.textContent?.trim() || imgEl.alt?.trim() || "";
+  const name = cleanName(rawName);
+  if (!name || name.length < 4) return;
+
+  productInfo = {
+    name,
+    price: priceEl?.textContent?.trim() || null,
+    image: imgEl.src,
+    url: linkEl?.href || location.href,
+    host: location.hostname.replace("www.", ""),
+  };
+  compareResults = [];
+  renderProduct(productInfo);
+  $("sq-panel").style.display = "block";
+  $("sq-pill").style.display = "none";
+  $("sq-spinner").style.display = "";
+  $("sq-results").style.display = "none";
+  $("sq-error").style.display = "none";
+  fetchPrices();
+}
+
+// ─── Inject panel ─────────────────────────────────────────────────────────────
 function inject(info) {
   // Remove existing panel before re-injecting
   const existing = document.getElementById("__scoutiq__");
@@ -613,9 +662,15 @@ function inject(info) {
   // Logo link in header: don't let it start a drag
   $("sq-logo-link").addEventListener("mousedown", (e) => e.stopPropagation());
 
+  // Clicking the header (without dragging) minimizes the panel
+  $("sq-header").addEventListener("click", (e) => {
+    if (e.target.id === "sq-close" || (e.target.closest && e.target.closest("#sq-logo-link"))) return;
+    closePanel();
+  });
+
   const sqWrap = $("sq-wrap");
-  makeDraggable($("sq-pill"), sqWrap);
-  makeDraggable($("sq-header"), sqWrap);
+  makeDraggable($("sq-pill"), sqWrap, handleImageDrop);
+  makeDraggable($("sq-header"), sqWrap, handleImageDrop);
 
   // Restore saved position (async, non-blocking)
   loadStoredPos().then((pos) => applyPos(sqWrap, pos));
@@ -624,7 +679,7 @@ function inject(info) {
   injected = true;
 }
 
-// â”€â”€â”€ Boot & SPA navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
   if (!isProductPage()) return;
 
