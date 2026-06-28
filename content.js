@@ -638,15 +638,17 @@ function handleImageDrop(imgEl) {
   const name = cleanName(rawName);
   if (!name || name.length < 4) return;
 
-  productInfo = {
+  const product = {
     name,
     price: priceEl?.textContent?.trim() || null,
     image: imgEl.src,
     url: linkEl?.href || location.href,
     host: location.hostname.replace("www.", ""),
   };
+  productInfo = product;
   compareResults = [];
-  renderProduct(productInfo);
+  saveStoredProduct(product); // persist so it survives tab switches and navigation
+  renderProduct(product);
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
   $("sq-spinner").style.display = "";
@@ -700,51 +702,65 @@ function inject(info) {
   injected = true;
 }
 
+// ─── Stored product ───────────────────────────────────────────────────────────
+function loadStoredProduct() {
+  return new Promise(r => chrome.storage.local.get(["sq_last_product"], d => r(d.sq_last_product || null)));
+}
+function saveStoredProduct(product) {
+  if (product) chrome.storage.local.set({ sq_last_product: product });
+  else chrome.storage.local.remove("sq_last_product");
+}
+
 // ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
   const enabled = await isPillEnabled();
   if (!enabled) return;
 
-  // Gather product info if this is a product page; null otherwise
-  const info = isProductPage() ? (buildProductInfo() || null) : null;
-  productInfo = info;
+  // Product comes from storage only — no auto-detection
+  const stored = await loadStoredProduct();
+  productInfo = stored;
   compareResults = [];
   session = await loadSession();
-  inject(info);
+  inject(stored);
 }
 
 async function showPill() {
   await setPillEnabled(true);
-  const info = isProductPage() ? (buildProductInfo() || null) : null;
-  productInfo = info;
+  const stored = await loadStoredProduct();
+  productInfo = stored;
   compareResults = [];
   session = await loadSession();
-  inject(info);
+  inject(stored);
 }
 
 async function hidePill() {
   await setPillEnabled(false);
+  saveStoredProduct(null); // clear stored product on toggle-off so next time starts fresh
+  productInfo = null;
+  compareResults = [];
   const host = document.getElementById("__scoutiq__");
   if (host) host.remove();
   shadow = null;
   injected = false;
 }
 
-// Watch for SPA navigation — re-inject with updated product info, keep pill visible
+// Watch for SPA navigation — only reinject if the shadow DOM was removed by the framework
 let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
-    injected = false;
     setTimeout(async () => {
       const enabled = await isPillEnabled();
       if (!enabled) return;
-      const info = isProductPage() ? (buildProductInfo() || null) : null;
-      productInfo = info;
+      // If our host element survived the navigation, leave it alone (product stays)
+      if (document.getElementById("__scoutiq__")) return;
+      // Shadow DOM was removed — reinject with whatever product is in storage
+      injected = false;
+      const stored = await loadStoredProduct();
+      productInfo = stored;
       compareResults = [];
-      session = await loadSession();
-      inject(info); // reinject so product info reflects new page
-    }, 1200);
+      inject(stored);
+    }, 800);
   }
 });
 navObserver.observe(document.body || document.documentElement, {
@@ -762,7 +778,7 @@ if (document.readyState === "loading") {
 // Message handler — toggle from background.js icon click
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "GET_PRODUCT_INFO") {
-    sendResponse(productInfo || buildProductInfo());
+    sendResponse(productInfo);
   }
   if (msg.type === "TOGGLE_PILL") {
     isPillEnabled().then(async (on) => {
@@ -771,5 +787,5 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       sendResponse({ ok: true });
     });
   }
-  return true; // keep channel open for async response
+  return true;
 });
