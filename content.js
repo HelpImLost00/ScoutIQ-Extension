@@ -243,6 +243,10 @@ const CSS = `
   .sq-logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #f0f0f0; }
   .sq-logo-icon { width: 22px; height: 22px; background: #7c3aed; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
   .sq-version { font-size: 9px; color: #444; letter-spacing: 0.03em; margin-right: auto; padding-left: 4px; }
+  .sq-header { cursor: grab; user-select: none; }
+  .sq-header.sq-dragging { cursor: grabbing; }
+  #sq-pill { cursor: grab; }
+  #sq-pill.sq-dragging { cursor: grabbing; }
   .sq-close { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
   .sq-close:hover { color: #f0f0f0; background: #1e1e1e; }
   .sq-body { padding: 11px 13px; max-height: 480px; overflow-y: auto; }
@@ -293,7 +297,7 @@ const HTML = `
   <div id="sq-wrap">
     <button id="sq-pill"><span>⚡</span><span id="sq-pill-label">Compare prices</span></button>
     <div id="sq-panel">
-      <div class="sq-header">
+      <div class="sq-header" id="sq-header">
         <div class="sq-logo"><div class="sq-logo-icon">⚡</div>ScoutIQ</div>
         <span class="sq-version">v1.2 · Jun 27</span>
         <button class="sq-close" id="sq-close">✕</button>
@@ -503,6 +507,69 @@ async function handleSignIn() {
   } catch { errEl.textContent = "Network error."; }
 }
 
+// ─── Drag & position persistence ─────────────────────────────────────────────
+async function loadStoredPos() {
+  return new Promise(r => chrome.storage.local.get(["sq_pos"], d => r(d.sq_pos || null)));
+}
+
+function saveStoredPos(left, top) {
+  chrome.storage.local.set({ sq_pos: { left, top } });
+}
+
+function applyPos(wrap, pos) {
+  if (!pos) return;
+  const maxL = window.innerWidth - wrap.offsetWidth - 4;
+  const maxT = window.innerHeight - wrap.offsetHeight - 4;
+  wrap.style.left = Math.max(4, Math.min(maxL, pos.left)) + "px";
+  wrap.style.top = Math.max(4, Math.min(maxT, pos.top)) + "px";
+  wrap.style.right = "auto";
+  wrap.style.bottom = "auto";
+}
+
+function makeDraggable(handle, wrap) {
+  handle.addEventListener("mousedown", (e) => {
+    // Don't initiate drag from close button
+    if (e.target.id === "sq-close" || e.button !== 0) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const rect = wrap.getBoundingClientRect();
+    const offX = e.clientX - rect.left;
+    const offY = e.clientY - rect.top;
+    let moved = false;
+
+    const onMove = (ev) => {
+      if (!moved && Math.abs(ev.clientX - startX) < 5 && Math.abs(ev.clientY - startY) < 5) return;
+      if (!moved) {
+        moved = true;
+        handle.classList.add("sq-dragging");
+        document.body.style.userSelect = "none";
+      }
+      const left = Math.max(4, Math.min(window.innerWidth - wrap.offsetWidth - 4, ev.clientX - offX));
+      const top = Math.max(4, Math.min(window.innerHeight - wrap.offsetHeight - 4, ev.clientY - offY));
+      wrap.style.left = left + "px";
+      wrap.style.top = top + "px";
+      wrap.style.right = "auto";
+      wrap.style.bottom = "auto";
+    };
+
+    const onUp = (ev) => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      handle.classList.remove("sq-dragging");
+      document.body.style.userSelect = "";
+      if (moved) {
+        const r = wrap.getBoundingClientRect();
+        saveStoredPos(r.left, r.top);
+        // Swallow the click that fires right after mouseup so panel doesn't open/close
+        handle.addEventListener("click", (e) => e.stopPropagation(), { capture: true, once: true });
+      }
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+}
+
 // ─── Inject panel ─────────────────────────────────────────────────────────────
 function inject(info) {
   // Remove existing panel before re-injecting
@@ -527,6 +594,13 @@ function inject(info) {
   $("sq-btn-track").addEventListener("click", handleTrack);
   $("sq-btn-login").addEventListener("click", handleSignIn);
   $("sq-password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleSignIn(); });
+
+  const sqWrap = $("sq-wrap");
+  makeDraggable($("sq-pill"), sqWrap);
+  makeDraggable($("sq-header"), sqWrap);
+
+  // Restore saved position (async, non-blocking)
+  loadStoredPos().then((pos) => applyPos(sqWrap, pos));
 
   renderProduct(info);
   injected = true;
