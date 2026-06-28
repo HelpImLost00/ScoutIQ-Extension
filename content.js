@@ -1,9 +1,9 @@
 const SCOUTIQ_URL = "https://scoutiq-waitlist-launch.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
 const EXT_KEY = "sq_ext_Kp7mN3xQ9vR2wL5j";
-const SUPABASE_URL = "https://nhrpopzpizapjsyifjuu.supabase.co";
+const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ocnBvcHpwaXphcGpzeWlmanV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTk1MTEsImV4cCI6MjA5NjI5NTUxMX0.p-SJv8ywAdo5h9YFQ3szQPuFILsqWuR0_jBLZFe4FqQ";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4c2VnbnpwamJ4bXVuZm52YXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTU0OTcsImV4cCI6MjA5NjI5MTQ5N30.obX93Mxx_pZ3csXAVLW1j4fYT5wC0QM4um-8--nDryA";
 
 // ─── Product detection ─────────────────────────────────────────────────────────
 function getMetaContent(property) {
@@ -223,14 +223,30 @@ const CSS = `
     font-size: 13px; line-height: 1.4;
   }
   #sq-pill {
-    display: flex; align-items: center; gap: 7px;
-    background: #7c3aed; color: #fff; border: none;
-    border-radius: 999px; padding: 9px 15px 9px 10px; cursor: pointer;
+    display: flex; align-items: center;
+    background: #7c3aed; color: #fff;
+    border-radius: 999px;
     box-shadow: 0 4px 20px rgba(124,58,237,0.45);
-    font-size: 13px; font-weight: 600; transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
+    font-size: 13px; font-weight: 600;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap; overflow: hidden;
   }
   #sq-pill:hover { background: #6d28d9; transform: scale(1.03); }
+  #sq-logo-link {
+    display: flex; align-items: center; justify-content: center;
+    padding: 9px 8px 9px 11px;
+    color: #fff; text-decoration: none; font-size: 14px;
+    cursor: pointer; flex-shrink: 0;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+  #sq-logo-link:hover { background: rgba(255,255,255,0.1); }
+  #sq-pill-text {
+    padding: 9px 14px 9px 10px;
+    cursor: grab; background: none; border: none;
+    color: #fff; font-size: 13px; font-weight: 600;
+    font-family: inherit;
+  }
+  #sq-pill-text.sq-dragging { cursor: grabbing; }
   #sq-panel {
     display: none; width: 340px; background: #0f0f0f;
     border: 1px solid #2a2a2a; border-radius: 12px;
@@ -245,8 +261,6 @@ const CSS = `
   .sq-version { font-size: 9px; color: #444; letter-spacing: 0.03em; margin-right: auto; padding-left: 4px; }
   .sq-header { cursor: grab; user-select: none; }
   .sq-header.sq-dragging { cursor: grabbing; }
-  #sq-pill { cursor: grab; }
-  #sq-pill.sq-dragging { cursor: grabbing; }
   .sq-close { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
   .sq-close:hover { color: #f0f0f0; background: #1e1e1e; }
   .sq-body { padding: 11px 13px; max-height: 480px; overflow-y: auto; }
@@ -295,11 +309,14 @@ const CSS = `
 
 const HTML = `
   <div id="sq-wrap">
-    <button id="sq-pill"><span>⚡</span><span id="sq-pill-label">Compare prices</span></button>
+    <div id="sq-pill">
+      <a id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener">⚡</a>
+      <button id="sq-pill-text">Compare prices</button>
+    </div>
     <div id="sq-panel">
       <div class="sq-header" id="sq-header">
         <div class="sq-logo"><div class="sq-logo-icon">⚡</div>ScoutIQ</div>
-        <span class="sq-version">v1.2 · June 27 · 3:44 PM</span>
+        <span class="sq-version">v1.2 · June 27 · 8:40 PM</span>
         <button class="sq-close" id="sq-close">✕</button>
       </div>
       <div class="sq-body">
@@ -589,14 +606,16 @@ function inject(info) {
   wrap.innerHTML = HTML;
   shadow.appendChild(wrap);
 
-  $("sq-pill").addEventListener("click", openPanel);
+  $("sq-pill-text").addEventListener("click", openPanel);
   $("sq-close").addEventListener("click", closePanel);
   $("sq-btn-track").addEventListener("click", handleTrack);
   $("sq-btn-login").addEventListener("click", handleSignIn);
   $("sq-password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleSignIn(); });
 
   const sqWrap = $("sq-wrap");
-  makeDraggable($("sq-pill"), sqWrap);
+  // Logo link is never draggable — block drag initiation from it
+  $("sq-logo-link").addEventListener("mousedown", (e) => e.stopPropagation());
+  makeDraggable($("sq-pill-text"), sqWrap);
   makeDraggable($("sq-header"), sqWrap);
 
   // Restore saved position (async, non-blocking)

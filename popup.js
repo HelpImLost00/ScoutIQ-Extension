@@ -1,9 +1,9 @@
 const SCOUTIQ_URL = "https://scoutiq-waitlist-launch.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
 const EXT_KEY = "sq_ext_Kp7mN3xQ9vR2wL5j";
-const SUPABASE_URL = "https://nhrpopzpizapjsyifjuu.supabase.co";
+const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ocnBvcHpwaXphcGpzeWlmanV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTk1MTEsImV4cCI6MjA5NjI5NTUxMX0.p-SJv8ywAdo5h9YFQ3szQPuFILsqWuR0_jBLZFe4FqQ";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4c2VnbnpwamJ4bXVuZm52YXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTU0OTcsImV4cCI6MjA5NjI5MTQ5N30.obX93Mxx_pZ3csXAVLW1j4fYT5wC0QM4um-8--nDryA";
 
 const RETAILER_BADGES = {
   Amazon: "badge-amazon",
