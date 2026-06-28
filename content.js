@@ -299,7 +299,7 @@ const HTML = `
     <div id="sq-panel">
       <div class="sq-header" id="sq-header">
         <div class="sq-logo"><div class="sq-logo-icon">⚡</div>ScoutIQ</div>
-        <span class="sq-version">v1.2 · Jun 27</span>
+        <span class="sq-version">v1.2 · June 27 · 3:44 PM</span>
         <button class="sq-close" id="sq-close">✕</button>
       </div>
       <div class="sq-body">
