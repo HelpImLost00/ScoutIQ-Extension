@@ -242,6 +242,7 @@ const CSS = `
   }
   .sq-logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #f0f0f0; }
   .sq-logo-icon { width: 22px; height: 22px; background: #7c3aed; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .sq-version { font-size: 9px; color: #444; letter-spacing: 0.03em; margin-right: auto; padding-left: 4px; }
   .sq-close { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
   .sq-close:hover { color: #f0f0f0; background: #1e1e1e; }
   .sq-body { padding: 11px 13px; max-height: 480px; overflow-y: auto; }
@@ -294,6 +295,7 @@ const HTML = `
     <div id="sq-panel">
       <div class="sq-header">
         <div class="sq-logo"><div class="sq-logo-icon">⚡</div>ScoutIQ</div>
+        <span class="sq-version">v1.2 · Jun 27</span>
         <button class="sq-close" id="sq-close">✕</button>
       </div>
       <div class="sq-body">

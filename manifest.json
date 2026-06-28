@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ScoutIQ",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "See the best price and all-time low for any product — powered by ScoutIQ.",
   "action": {
     "default_popup": "popup.html",
