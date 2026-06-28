@@ -6,11 +6,21 @@ chrome.action.onClicked.addListener(async (tab) => {
   console.log("[ScoutIQ] toggling:", sq_pill_on, "→", next);
   await chrome.storage.local.set({ sq_pill_on: next });
 
-  // Step 1: Ensure content.js is loaded (IIFE guard prevents double-init)
+  // Step 1: Ensure content.js is loaded
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
   } catch (err) {
-    console.log("[ScoutIQ] content.js inject:", err?.message);
+    // Show inject error visibly on the page
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (msg) => {
+        const b = document.createElement("div");
+        b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:orange;color:#000;padding:8px;font:bold 13px monospace;text-align:center;white-space:pre-wrap;";
+        b.textContent = "ScoutIQ files inject error: " + msg;
+        document.body.appendChild(b);
+      },
+      args: [String(err)],
+    }).catch(() => {});
   }
 
   // Step 2: Call __sq_toggle directly — this always works whether the script
