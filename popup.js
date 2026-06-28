@@ -86,29 +86,42 @@ async function fetchPrices(productName) {
   document.getElementById("resultsError").style.display = "none";
   document.getElementById("trackSection").style.display = "none";
 
+  const wakeHint = setTimeout(() => {
+    showResultsError("Waking up price server… first load takes ~30s.");
+  }, 4000);
+
+  const controller = new AbortController();
+  const hardTimeout = setTimeout(() => controller.abort(), 55000);
+
   try {
     const res = await fetch(
       `${SCRAPER_URL}/ext/compare?q=${encodeURIComponent(productName)}`,
-      { headers: { "x-ext-key": EXT_KEY } },
+      { headers: { "x-ext-key": EXT_KEY }, signal: controller.signal },
     );
+    clearTimeout(wakeHint);
+    clearTimeout(hardTimeout);
     const json = await res.json();
 
     document.getElementById("resultsLoading").style.display = "none";
+    document.getElementById("resultsError").style.display = "none";
 
     if (!json.success || !Array.isArray(json.results) || json.results.length === 0) {
       showResultsError("No prices found. Try searching on the ScoutIQ app.");
       return;
     }
 
-    // Filter and sort by price
     currentResults = json.results
       .filter((r) => r.price > 0 && r.url)
       .sort((a, b) => a.price - b.price);
 
     renderResults(currentResults);
-  } catch {
+  } catch (e) {
+    clearTimeout(wakeHint);
+    clearTimeout(hardTimeout);
     document.getElementById("resultsLoading").style.display = "none";
-    showResultsError("Couldn't reach ScoutIQ. Check your connection.");
+    showResultsError(e.name === "AbortError"
+      ? "Price server timed out — try again in a moment."
+      : "Couldn't reach the price server. Check your connection.");
   }
 }
 

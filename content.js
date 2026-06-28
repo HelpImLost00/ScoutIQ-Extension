@@ -33,33 +33,51 @@ function getSchemaOrg() {
 }
 
 function isProductPage() {
-  // 1. og:type = product
+  const path = location.pathname.toLowerCase();
+  const search = location.search.toLowerCase();
+  const host = location.hostname.replace("www.", "");
+
+  // ── Hard exclusions (listing / search / category pages) ──────────────────
+  // Search query params — almost always a results page
+  if (/[?&](k|q|query|search|keyword|s)=/.test(search)) return false;
+  // Common listing path segments
+  if (/\/(search|results|browse|category|categories|collection|collections|department|shop\/all|sitesearch|find)/.test(path)) return false;
+  // Amazon-specific: /s (search), /b (browse/category)
+  if (host.includes("amazon") && /^\/(s|b)(\/|$|\?)/.test(location.pathname)) return false;
+  // eBay search
+  if (host.includes("ebay") && path.startsWith("/sch/")) return false;
+  // Walmart search
+  if (host.includes("walmart") && path.startsWith("/search")) return false;
+  // Best Buy search
+  if (host.includes("bestbuy") && path.includes("/searchpage.jsp")) return false;
+  // Multiple product cards on page (grid of products = listing page)
+  const productCards = document.querySelectorAll(
+    '[data-component-type="s-search-result"], [data-testid="product-tile"], .product-item, [class*="ProductGrid"], [class*="product-grid"]'
+  );
+  if (productCards.length > 2) return false;
+
+  // ── Positive signals ──────────────────────────────────────────────────────
+  // og:type = product (very reliable — set per-item by every major retailer)
   if ((getMetaContent("og:type") || "").toLowerCase().includes("product")) return true;
 
-  // 2. schema.org Product
+  // schema.org @type: Product
   if (getSchemaOrg()) return true;
 
-  // 3. URL path patterns common to product pages
-  const path = location.pathname.toLowerCase();
-  if (/\/(dp|ip|itm|product|products|item|items|p|pd|sku|goods|detail|buy|shop|listing)\//.test(path)) return true;
+  // Product-specific URL identifier segment
+  if (/\/(dp|ip|itm|product|item|pd|sku|goods|detail|listing)\/[a-zA-Z0-9]/.test(path)) return true;
 
-  // 4. Has a price element and an h1 (strong signal)
+  // Single h1 + price + add-to-cart = very strong product page signal
+  const h1Count = document.querySelectorAll("h1").length;
   const hasPrice = !!(
     document.querySelector('[itemprop="price"]') ||
-    document.querySelector('[class*="product-price" i]') ||
-    document.querySelector('[class*="ProductPrice" i]') ||
     document.querySelector('[data-testid*="price" i]') ||
-    document.querySelector('[id*="price" i]')
+    document.querySelector('[class*="current-price" i]') ||
+    document.querySelector('[class*="ProductPrice" i]')
   );
-  const hasH1 = !!document.querySelector("h1");
-  if (hasPrice && hasH1) return true;
-
-  // 5. Add-to-cart button present (strong signal for product pages)
   const atcText = ["add to cart", "add to bag", "buy now", "add to basket"];
-  const buttons = document.querySelectorAll("button, [role=button], input[type=submit]");
-  for (const btn of buttons) {
-    if (atcText.some((t) => (btn.textContent || "").toLowerCase().includes(t))) return true;
-  }
+  const hasAtc = [...document.querySelectorAll("button, [role=button]")]
+    .some(btn => atcText.some(t => (btn.textContent || "").toLowerCase().includes(t)));
+  if (h1Count === 1 && hasPrice && hasAtc) return true;
 
   return false;
 }
@@ -366,13 +384,25 @@ async function fetchPrices() {
   $("sq-error").style.display = "none";
   $("sq-track-section").style.display = "none";
 
+  // Show "waking up" hint after 4s — Render free tier cold starts take up to 45s
+  const wakeHint = setTimeout(() => {
+    const err = $("sq-error");
+    if (err) { err.textContent = "Waking up price server… this takes ~30s on first use."; err.style.display = ""; }
+  }, 4000);
+
+  const controller = new AbortController();
+  const hardTimeout = setTimeout(() => controller.abort(), 55000);
+
   try {
     const res = await fetch(
       `${SCRAPER_URL}/ext/compare?q=${encodeURIComponent(productInfo.name)}`,
-      { headers: { "x-ext-key": EXT_KEY } },
+      { headers: { "x-ext-key": EXT_KEY }, signal: controller.signal },
     );
+    clearTimeout(wakeHint);
+    clearTimeout(hardTimeout);
     const json = await res.json();
     $("sq-spinner").style.display = "none";
+    $("sq-error").style.display = "none";
 
     if (!json.success || !Array.isArray(json.results) || !json.results.length) {
       $("sq-error").textContent = "No prices found for this product.";
@@ -382,9 +412,14 @@ async function fetchPrices() {
 
     compareResults = json.results.filter((r) => r.price > 0 && r.url).sort((a, b) => a.price - b.price);
     renderResults();
-  } catch {
+  } catch (e) {
+    clearTimeout(wakeHint);
+    clearTimeout(hardTimeout);
     $("sq-spinner").style.display = "none";
-    $("sq-error").textContent = "Couldn't reach the price server. Make sure you're connected.";
+    const msg = e.name === "AbortError"
+      ? "Price server timed out. Try again in a moment."
+      : "Couldn't reach the price server. Check your connection.";
+    $("sq-error").textContent = msg;
     $("sq-error").style.display = "";
   }
 }
