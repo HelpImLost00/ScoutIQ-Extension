@@ -1,6 +1,6 @@
 const SCOUTIQ_URL = "https://scoutiq-waitlist-launch.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
-const EXT_KEY = "REPLACE_WITH_YOUR_EXT_API_KEY";
+const EXT_KEY = "sq_ext_Kp7mN3xQ9vR2wL5j";
 const SUPABASE_URL = "https://nhrpopzpizapjsyifjuu.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ocnBvcHpwaXphcGpzeWlmanV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTk1MTEsImV4cCI6MjA5NjI5NTUxMX0.p-SJv8ywAdo5h9YFQ3szQPuFILsqWuR0_jBLZFe4FqQ";
