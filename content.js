@@ -1,11 +1,11 @@
-const SCOUTIQ_URL = "https://scoutiq-waitlist-launch.lovable.app";
+﻿const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
 const EXT_KEY = "sq_ext_Kp7mN3xQ9vR2wL5j";
 const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4c2VnbnpwamJ4bXVuZm52YXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTU0OTcsImV4cCI6MjA5NjI5MTQ5N30.obX93Mxx_pZ3csXAVLW1j4fYT5wC0QM4um-8--nDryA";
 
-// ─── Product detection ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Product detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getMetaContent(property) {
   const el =
     document.querySelector(`meta[property="${property}"]`) ||
@@ -37,8 +37,8 @@ function isProductPage() {
   const search = location.search.toLowerCase();
   const host = location.hostname.replace("www.", "");
 
-  // ── Hard exclusions (listing / search / category pages) ──────────────────
-  // Search query params — almost always a results page
+  // â”€â”€ Hard exclusions (listing / search / category pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Search query params â€” almost always a results page
   if (/[?&](k|q|query|search|keyword|s)=/.test(search)) return false;
   // Common listing path segments
   if (/\/(search|results|browse|category|categories|collection|collections|department|shop\/all|sitesearch|find)/.test(path)) return false;
@@ -56,8 +56,8 @@ function isProductPage() {
   );
   if (productCards.length > 2) return false;
 
-  // ── Positive signals ──────────────────────────────────────────────────────
-  // og:type = product (very reliable — set per-item by every major retailer)
+  // â”€â”€ Positive signals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // og:type = product (very reliable â€” set per-item by every major retailer)
   if ((getMetaContent("og:type") || "").toLowerCase().includes("product")) return true;
 
   // schema.org @type: Product
@@ -126,7 +126,7 @@ function extractName() {
   if (h1?.textContent?.trim().length > 5) return h1.textContent.trim();
 
   // Page title, strip store name suffix
-  return document.title.split(/\s*[\|–\-]\s*/)[0].trim();
+  return document.title.split(/\s*[\|â€“\-]\s*/)[0].trim();
 }
 
 function extractPrice() {
@@ -173,7 +173,7 @@ function extractPrice() {
   for (const sel of priceSelectors) {
     const el = document.querySelector(sel);
     const txt = el?.getAttribute("content") || el?.getAttribute("data-price") || el?.textContent?.trim();
-    if (txt && /\$|£|€|\d/.test(txt)) return txt.slice(0, 20);
+    if (txt && /\$|Â£|â‚¬|\d/.test(txt)) return txt.slice(0, 20);
   }
   return null;
 }
@@ -196,7 +196,7 @@ function extractImage() {
 function cleanName(name) {
   if (!name) return null;
   return name
-    .replace(/\s*[\|–\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
+    .replace(/\s*[\|â€“\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
     .replace(/\s*:\s*Amazon\.com.*$/i, "")
     .trim()
     .slice(0, 200);
@@ -214,7 +214,7 @@ function buildProductInfo() {
   };
 }
 
-// ─── Shadow DOM Panel ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Shadow DOM Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CSS = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
   #sq-wrap {
@@ -223,30 +223,15 @@ const CSS = `
     font-size: 13px; line-height: 1.4;
   }
   #sq-pill {
-    display: flex; align-items: center;
-    background: #7c3aed; color: #fff;
-    border-radius: 999px;
+    display: flex; align-items: center; gap: 7px;
+    background: #7c3aed; color: #fff; border: none;
+    border-radius: 999px; padding: 9px 15px 9px 10px; cursor: grab;
     box-shadow: 0 4px 20px rgba(124,58,237,0.45);
-    font-size: 13px; font-weight: 600;
-    transition: background 0.15s, transform 0.1s;
-    white-space: nowrap; overflow: hidden;
+    font-size: 13px; font-weight: 600; transition: background 0.15s, transform 0.1s;
+    white-space: nowrap; font-family: inherit;
   }
   #sq-pill:hover { background: #6d28d9; transform: scale(1.03); }
-  #sq-logo-link {
-    display: flex; align-items: center; justify-content: center;
-    padding: 9px 8px 9px 11px;
-    color: #fff; text-decoration: none; font-size: 14px;
-    cursor: pointer; flex-shrink: 0;
-    border-right: 1px solid rgba(255,255,255,0.15);
-  }
-  #sq-logo-link:hover { background: rgba(255,255,255,0.1); }
-  #sq-pill-text {
-    padding: 9px 14px 9px 10px;
-    cursor: grab; background: none; border: none;
-    color: #fff; font-size: 13px; font-weight: 600;
-    font-family: inherit;
-  }
-  #sq-pill-text.sq-dragging { cursor: grabbing; }
+  #sq-pill.sq-dragging { cursor: grabbing; }
   #sq-panel {
     display: none; width: 340px; background: #0f0f0f;
     border: 1px solid #2a2a2a; border-radius: 12px;
@@ -256,7 +241,8 @@ const CSS = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 13px; background: #0a0a0a; border-bottom: 1px solid #1e1e1e;
   }
-  .sq-logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #f0f0f0; }
+  .sq-logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: #f0f0f0; text-decoration: none; cursor: pointer; }
+  .sq-logo:hover { opacity: 0.8; }
   .sq-logo-icon { width: 22px; height: 22px; background: #7c3aed; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
   .sq-version { font-size: 9px; color: #444; letter-spacing: 0.03em; margin-right: auto; padding-left: 4px; }
   .sq-header { cursor: grab; user-select: none; }
@@ -309,15 +295,12 @@ const CSS = `
 
 const HTML = `
   <div id="sq-wrap">
-    <div id="sq-pill">
-      <a id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener">⚡</a>
-      <button id="sq-pill-text">Compare prices</button>
-    </div>
+    <button id="sq-pill"><span>âš¡</span><span>Compare prices</span></button>
     <div id="sq-panel">
       <div class="sq-header" id="sq-header">
-        <div class="sq-logo"><div class="sq-logo-icon">⚡</div>ScoutIQ</div>
-        <span class="sq-version">v1.2 · June 27 · 8:40 PM</span>
-        <button class="sq-close" id="sq-close">✕</button>
+        <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">âš¡</div>ScoutIQ</a>
+        <span class="sq-version">v1.2 Â· June 27 Â· 8:40 PM</span>
+        <button class="sq-close" id="sq-close">âœ•</button>
       </div>
       <div class="sq-body">
         <div class="sq-product" id="sq-product" style="display:none">
@@ -332,23 +315,23 @@ const HTML = `
         <div class="sq-results" id="sq-results" style="display:none"></div>
         <div class="sq-error" id="sq-error" style="display:none"></div>
         <div class="sq-track-section" id="sq-track-section" style="display:none">
-          <button class="sq-btn-track" id="sq-btn-track">♡ Track this product</button>
+          <button class="sq-btn-track" id="sq-btn-track">â™¡ Track this product</button>
           <div class="sq-hint" id="sq-hint"></div>
         </div>
         <div class="sq-auth" id="sq-auth" style="display:none">
           <div class="sq-auth-title">Sign in to track prices</div>
           <div class="sq-field"><label>Email</label><input type="email" id="sq-email" placeholder="you@email.com" /></div>
-          <div class="sq-field"><label>Password</label><input type="password" id="sq-password" placeholder="••••••••" /></div>
+          <div class="sq-field"><label>Password</label><input type="password" id="sq-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" /></div>
           <div class="sq-auth-error" id="sq-auth-error"></div>
           <button class="sq-btn-login" id="sq-btn-login">Sign in</button>
-          <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free ↗</a></div>
+          <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free â†—</a></div>
         </div>
       </div>
     </div>
   </div>
 `;
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let shadow = null;
 let productInfo = null;
 let compareResults = [];
@@ -357,22 +340,38 @@ let injected = false;
 
 function $(id) { return shadow ? shadow.getElementById(id) : null; }
 
-// ─── Session ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSession() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(["sb_session"], (r) => {
+    chrome.storage.local.get(["sb_session"], async (r) => {
       const s = r.sb_session;
-      if (!s || (s.expires_at && Date.now() / 1000 > s.expires_at)) {
-        chrome.storage.local.remove("sb_session");
-        return resolve(null);
+      if (!s) return resolve(null);
+      // Token still valid (with 60s buffer)
+      if (!s.expires_at || Date.now() / 1000 < s.expires_at - 60) return resolve(s);
+      // Try refreshing with refresh_token
+      if (s.refresh_token) {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: "POST",
+            headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: s.refresh_token }),
+          });
+          const json = await res.json();
+          if (res.ok && json.access_token) {
+            const fresh = { access_token: json.access_token, refresh_token: json.refresh_token || s.refresh_token, user: json.user || s.user, expires_at: json.expires_at };
+            chrome.storage.local.set({ sb_session: fresh });
+            return resolve(fresh);
+          }
+        } catch {}
       }
-      resolve(s);
+      chrome.storage.local.remove("sb_session");
+      resolve(null);
     });
   });
 }
 function saveSession(s) { chrome.storage.local.set({ sb_session: s }); session = s; }
 
-// ─── Panel ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function openPanel() {
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
@@ -395,7 +394,7 @@ function renderProduct(info) {
   }
 }
 
-// ─── Compare ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Compare â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmtPrice(p) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(p);
 }
@@ -407,10 +406,10 @@ async function fetchPrices() {
   $("sq-error").style.display = "none";
   $("sq-track-section").style.display = "none";
 
-  // Show "waking up" hint after 4s — Render free tier cold starts take up to 45s
+  // Show "waking up" hint after 4s â€” Render free tier cold starts take up to 45s
   const wakeHint = setTimeout(() => {
     const err = $("sq-error");
-    if (err) { err.textContent = "Waking up price server… this takes ~30s on first use."; err.style.display = ""; }
+    if (err) { err.textContent = "Waking up price serverâ€¦ this takes ~30s on first use."; err.style.display = ""; }
   }, 4000);
 
   const controller = new AbortController();
@@ -470,12 +469,12 @@ function renderResults() {
   updateTrackBtn();
 }
 
-// ─── Track ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Track â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function updateTrackBtn() {
   const btn = $("sq-btn-track");
   if (!btn) return;
   if (!session) {
-    btn.textContent = "♡ Track this product";
+    btn.textContent = "â™¡ Track this product";
     btn.disabled = false;
     btn.className = "sq-btn-track";
     $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/signup" target="_blank">Sign in or create a free account</a>`;
@@ -486,7 +485,7 @@ async function handleTrack() {
   if (!compareResults.length) return;
   if (!session) { $("sq-auth").style.display = ""; $("sq-email").focus(); return; }
   const btn = $("sq-btn-track");
-  btn.disabled = true; btn.textContent = "Adding…";
+  btn.disabled = true; btn.textContent = "Addingâ€¦";
   const best = compareResults[0];
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_products`, {
@@ -494,13 +493,13 @@ async function handleTrack() {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
       body: JSON.stringify({ user_id: session.user.id, product_name: productInfo.name, url: productInfo.url, retailer: best.retailer, current_price: best.price, currency: "USD", drop_threshold_pct: 5, scrape_status: "pending" }),
     });
-    if (res.status === 401) { session = null; chrome.storage.local.remove("sb_session"); $("sq-auth").style.display = ""; btn.disabled = false; btn.textContent = "♡ Track this product"; return; }
-    btn.className = "sq-btn-track sq-tracked"; btn.textContent = "✓ Tracked"; btn.disabled = true;
-    $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/dashboard" target="_blank">View in watchlist ↗</a>`;
+    if (res.status === 401) { session = null; chrome.storage.local.remove("sb_session"); $("sq-auth").style.display = ""; btn.disabled = false; btn.textContent = "â™¡ Track this product"; return; }
+    btn.className = "sq-btn-track sq-tracked"; btn.textContent = "âœ“ Tracked"; btn.disabled = true;
+    $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/dashboard" target="_blank">View in watchlist â†—</a>`;
     $("sq-auth").style.display = "none";
   } catch {
-    btn.disabled = false; btn.textContent = "♡ Track this product";
-    $("sq-hint").textContent = "Error — try again.";
+    btn.disabled = false; btn.textContent = "â™¡ Track this product";
+    $("sq-hint").textContent = "Error â€” try again.";
   }
 }
 
@@ -518,13 +517,13 @@ async function handleSignIn() {
     });
     const json = await res.json();
     if (!res.ok || json.error) { errEl.textContent = json.error_description || "Sign in failed."; return; }
-    saveSession({ access_token: json.access_token, user: json.user, expires_at: json.expires_at });
+    saveSession({ access_token: json.access_token, refresh_token: json.refresh_token, user: json.user, expires_at: json.expires_at });
     $("sq-auth").style.display = "none";
     handleTrack();
   } catch { errEl.textContent = "Network error."; }
 }
 
-// ─── Drag & position persistence ─────────────────────────────────────────────
+// â”€â”€â”€ Drag & position persistence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadStoredPos() {
   return new Promise(r => chrome.storage.local.get(["sq_pos"], d => r(d.sq_pos || null)));
 }
@@ -587,7 +586,7 @@ function makeDraggable(handle, wrap) {
   });
 }
 
-// ─── Inject panel ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Inject panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function inject(info) {
   // Remove existing panel before re-injecting
   const existing = document.getElementById("__scoutiq__");
@@ -606,16 +605,16 @@ function inject(info) {
   wrap.innerHTML = HTML;
   shadow.appendChild(wrap);
 
-  $("sq-pill-text").addEventListener("click", openPanel);
+  $("sq-pill").addEventListener("click", openPanel);
   $("sq-close").addEventListener("click", closePanel);
   $("sq-btn-track").addEventListener("click", handleTrack);
   $("sq-btn-login").addEventListener("click", handleSignIn);
   $("sq-password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleSignIn(); });
+  // Logo link in header: don't let it start a drag
+  $("sq-logo-link").addEventListener("mousedown", (e) => e.stopPropagation());
 
   const sqWrap = $("sq-wrap");
-  // Logo link is never draggable — block drag initiation from it
-  $("sq-logo-link").addEventListener("mousedown", (e) => e.stopPropagation());
-  makeDraggable($("sq-pill-text"), sqWrap);
+  makeDraggable($("sq-pill"), sqWrap);
   makeDraggable($("sq-header"), sqWrap);
 
   // Restore saved position (async, non-blocking)
@@ -625,7 +624,7 @@ function inject(info) {
   injected = true;
 }
 
-// ─── Boot & SPA navigation ────────────────────────────────────────────────────
+// â”€â”€â”€ Boot & SPA navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function boot() {
   if (!isProductPage()) return;
 

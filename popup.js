@@ -1,4 +1,4 @@
-const SCOUTIQ_URL = "https://scoutiq-waitlist-launch.lovable.app";
+const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
 const EXT_KEY = "sq_ext_Kp7mN3xQ9vR2wL5j";
 const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
@@ -169,15 +169,27 @@ function renderResults(results) {
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 async function loadSession() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(["sb_session"], (result) => {
+    chrome.storage.local.get(["sb_session"], async (result) => {
       const s = result.sb_session;
       if (!s) return resolve(null);
-      // Check expiry
-      if (s.expires_at && Date.now() / 1000 > s.expires_at) {
-        chrome.storage.local.remove("sb_session");
-        return resolve(null);
+      if (!s.expires_at || Date.now() / 1000 < s.expires_at - 60) return resolve(s);
+      if (s.refresh_token) {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: "POST",
+            headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: s.refresh_token }),
+          });
+          const json = await res.json();
+          if (res.ok && json.access_token) {
+            const fresh = { access_token: json.access_token, refresh_token: json.refresh_token || s.refresh_token, user: json.user || s.user, expires_at: json.expires_at };
+            chrome.storage.local.set({ sb_session: fresh });
+            return resolve(fresh);
+          }
+        } catch {}
       }
-      resolve(s);
+      chrome.storage.local.remove("sb_session");
+      resolve(null);
     });
   });
 }
@@ -235,7 +247,7 @@ async function signIn() {
       return;
     }
 
-    saveSession({ access_token: json.access_token, user: json.user, expires_at: json.expires_at });
+    saveSession({ access_token: json.access_token, refresh_token: json.refresh_token, user: json.user, expires_at: json.expires_at });
     updateAuthUI();
     document.getElementById("authSection").style.display = "none";
     updateTrackButton();
