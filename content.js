@@ -694,10 +694,7 @@ function inject(info) {
   makeDraggable($("sq-pill"), sqWrap, handleImageDrop);
   makeDraggable($("sq-header"), sqWrap, handleImageDrop);
 
-  // Restore saved position (async, non-blocking)
-  loadStoredPos().then((pos) => applyPos(sqWrap, pos));
-
-  // Render product info if we have it, otherwise pill is ready for non-product pages
+  // Always start at bottom-right on toggle-on — no saved position restored
   if (info) renderProduct(info);
   injected = true;
 }
@@ -735,7 +732,8 @@ async function showPill() {
 
 async function hidePill() {
   await setPillEnabled(false);
-  saveStoredProduct(null); // clear stored product on toggle-off so next time starts fresh
+  saveStoredProduct(null); // clear product so next toggle-on starts fresh
+  chrome.storage.local.remove("sq_pos"); // clear drag position so it returns to bottom-right
   productInfo = null;
   compareResults = [];
   const host = document.getElementById("__scoutiq__");
