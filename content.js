@@ -1,6 +1,6 @@
 ﻿// Plain IIFE — const declarations are function-scoped so re-injection is safe.
 // window.__sq_nav_observer is disconnected before re-registering.
-(() => {
+(() => { try {
 console.log("[ScoutIQ] content.js initializing");
 
 const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
@@ -875,4 +875,18 @@ if (document.readyState === "loading") {
   setTimeout(boot, 800);
 }
 
+} catch(e) {
+  console.error("[ScoutIQ] INIT FAILED:", e);
+  // Show a visible error pill so we can read the message
+  window.__sq_toggle = (on) => {
+    const old = document.getElementById("__scoutiq__");
+    if (old) old.remove();
+    if (!on) return;
+    const d = document.createElement("div");
+    d.id = "__scoutiq__";
+    d.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:2147483647;background:#c00;color:#fff;padding:10px 14px;border-radius:12px;font:13px/1.4 sans-serif;max-width:320px;word-break:break-word;";
+    d.textContent = "⚡ ScoutIQ init error: " + e.message;
+    document.body.appendChild(d);
+  };
+}
 })();

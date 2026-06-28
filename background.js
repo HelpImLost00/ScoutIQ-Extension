@@ -19,8 +19,9 @@ chrome.action.onClicked.addListener(async (tab) => {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: async (on) => {
-        if (window.__sq_toggle) await window.__sq_toggle(on);
-        else console.warn("[ScoutIQ] __sq_toggle not set yet");
+        if (!window.__sq_toggle) { console.error("[ScoutIQ] __sq_toggle missing after inject"); return; }
+        try { await window.__sq_toggle(on); }
+        catch(e) { console.error("[ScoutIQ] __sq_toggle threw:", e.message, e.stack); }
       },
       args: [next],
     });
