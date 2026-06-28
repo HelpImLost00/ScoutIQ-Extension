@@ -833,18 +833,8 @@ function _applyPillOff() {
   injected = false;
 }
 
-// Storage listener — background.js toggles sq_pill_on; we react here
-chrome.storage.onChanged.addListener(async (changes, area) => {
-  if (area !== "local" || !("sq_pill_on" in changes)) return;
-  console.log("[ScoutIQ] onChanged fired — sq_pill_on:", changes.sq_pill_on.newValue);
-  if (changes.sq_pill_on.newValue) {
-    session = await loadSession();
-    const stored = await loadStoredProduct();
-    _applyPillOn(stored);
-  } else {
-    _applyPillOff();
-  }
-});
+// Toggle is driven by window.__sq_toggle called directly from background.js.
+// No storage listener needed — it caused double-inject races.
 
 // Watch for SPA navigation — only reinject if the shadow DOM was removed by the framework
 let lastUrl = location.href;
