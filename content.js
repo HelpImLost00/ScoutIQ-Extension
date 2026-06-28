@@ -1,4 +1,7 @@
-﻿const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
+﻿// IIFE guard — safe to inject multiple times (manifest + executeScript fallback)
+if (!window.__sq_loaded) { window.__sq_loaded = true; (() => {
+
+const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
 const EXT_KEY = "sq_ext_Kp7mN3xQ9vR2wL5j";
 const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
@@ -858,3 +861,5 @@ if (document.readyState === "loading") {
 } else {
   setTimeout(boot, 800);
 }
+
+})(); } // end IIFE guard
