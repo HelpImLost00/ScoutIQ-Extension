@@ -773,17 +773,10 @@ if (document.readyState === "loading") {
   setTimeout(boot, 800);
 }
 
-// Message handler — toggle from background.js icon click
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === "GET_PRODUCT_INFO") {
-    sendResponse(productInfo);
-  }
-  if (msg.type === "TOGGLE_PILL") {
-    isPillEnabled().then(async (on) => {
-      if (on) await hidePill();
-      else await showPill();
-      sendResponse({ ok: true });
-    });
-  }
-  return true;
-});
+// Expose toggle as a global so background.js can call it via executeScript
+// (avoids the message-passing dead zone on tabs that haven't been refreshed)
+window.__sq_toggle = async () => {
+  const on = await isPillEnabled();
+  if (on) await hidePill();
+  else await showPill();
+};
