@@ -1,10 +1,7 @@
-﻿// IIFE guard — safe to inject multiple times (manifest + executeScript fallback)
-if (window.__sq_loaded) {
-  console.log("[ScoutIQ] content.js already loaded — skipping re-init");
-} else {
-window.__sq_loaded = true;
-console.log("[ScoutIQ] content.js initializing");
+﻿// Plain IIFE — const declarations are function-scoped so re-injection is safe.
+// window.__sq_nav_observer is disconnected before re-registering.
 (() => {
+console.log("[ScoutIQ] content.js initializing");
 
 const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
@@ -386,7 +383,7 @@ let compareResults = [];
 let session = null;
 let injected = false;
 
-function $(id) { return shadow ? shadow.getElementById(id) : null; }
+function $(id) { return shadow ? shadow.querySelector("#" + id) : null; }
 
 // ─── Session ──────────────────────────────────────────────────────────────────
 async function loadSession() {
@@ -836,7 +833,8 @@ function _applyPillOff() {
 // Toggle is driven by window.__sq_toggle called directly from background.js.
 // No storage listener needed — it caused double-inject races.
 
-// Watch for SPA navigation — only reinject if the shadow DOM was removed by the framework
+// Watch for SPA navigation — disconnect any previous observer first (re-injection safe)
+if (window.__sq_nav_observer) { window.__sq_nav_observer.disconnect(); }
 let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
   if (location.href !== lastUrl) {
@@ -853,6 +851,7 @@ const navObserver = new MutationObserver(() => {
     }, 800);
   }
 });
+window.__sq_nav_observer = navObserver;
 navObserver.observe(document.body || document.documentElement, {
   childList: true,
   subtree: true,
@@ -876,4 +875,4 @@ if (document.readyState === "loading") {
   setTimeout(boot, 800);
 }
 
-})(); } // end IIFE guard (else branch)
+})();
