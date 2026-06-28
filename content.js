@@ -1,5 +1,10 @@
 ﻿// IIFE guard — safe to inject multiple times (manifest + executeScript fallback)
-if (!window.__sq_loaded) { window.__sq_loaded = true; (() => {
+if (window.__sq_loaded) {
+  console.log("[ScoutIQ] content.js already loaded — skipping re-init");
+} else {
+window.__sq_loaded = true;
+console.log("[ScoutIQ] content.js initializing");
+(() => {
 
 const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
@@ -780,6 +785,7 @@ function saveStoredProduct(product) {
 // ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
   const { sq_pill_on, sq_auto_open } = await chrome.storage.local.get(["sq_pill_on", "sq_auto_open"]);
+  console.log("[ScoutIQ] boot() — sq_pill_on:", sq_pill_on);
   if (!sq_pill_on) return;
 
   let stored = await loadStoredProduct();
@@ -804,9 +810,15 @@ async function boot() {
 }
 
 function _applyPillOn(stored) {
+  console.log("[ScoutIQ] _applyPillOn() — product:", stored?.name || "none");
   productInfo = stored;
   compareResults = [];
-  inject(stored);
+  try {
+    inject(stored);
+    console.log("[ScoutIQ] inject() completed OK");
+  } catch(e) {
+    console.error("[ScoutIQ] inject() threw:", e);
+  }
 }
 
 function _applyPillOff() {
@@ -823,7 +835,7 @@ function _applyPillOff() {
 // Storage listener — background.js toggles sq_pill_on; we react here
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area !== "local" || !("sq_pill_on" in changes)) return;
-  console.log("[ScoutIQ] storage change received — sq_pill_on:", changes.sq_pill_on.newValue);
+  console.log("[ScoutIQ] onChanged fired — sq_pill_on:", changes.sq_pill_on.newValue);
   if (changes.sq_pill_on.newValue) {
     session = await loadSession();
     const stored = await loadStoredProduct();
@@ -862,4 +874,4 @@ if (document.readyState === "loading") {
   setTimeout(boot, 800);
 }
 
-})(); } // end IIFE guard
+})(); } // end IIFE guard (else branch)
