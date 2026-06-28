@@ -1,4 +1,4 @@
-﻿// Plain IIFE — const declarations are function-scoped so re-injection is safe.
+// Plain IIFE — const declarations are function-scoped so re-injection is safe.
 // window.__sq_nav_observer is disconnected before re-registering.
 (() => { try {
 console.log("[ScoutIQ] content.js initializing");
@@ -131,7 +131,7 @@ function extractName() {
   if (h1?.textContent?.trim().length > 5) return h1.textContent.trim();
 
   // Page title, strip store name suffix
-  return document.title.split(/\s*[\|â€“\-]\s*/)[0].trim();
+  return document.title.split(/\s*[\|â€"\-]\s*/)[0].trim();
 }
 
 function extractPrice() {
@@ -201,7 +201,7 @@ function extractImage() {
 function cleanName(name) {
   if (!name) return null;
   return name
-    .replace(/\s*[\|â€“\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
+    .replace(/\s*[\|â€"\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
     .replace(/\s*:\s*Amazon\.com.*$/i, "")
     .trim()
     .slice(0, 200);
@@ -567,27 +567,27 @@ function updateTrackBtn() {
 
 async function handleTrack() {
   if (!productInfo) return;
-  if (!session) { $(“sq-auth”).style.display = “”; $(“sq-email”).focus(); return; }
-  const btn = $(“sq-btn-track”);
-  btn.disabled = true; btn.textContent = “Adding…”;
+  if (!session) { $("sq-auth").style.display = ""; $("sq-email").focus(); return; }
+  const btn = $("sq-btn-track");
+  btn.disabled = true; btn.textContent = "Adding…";
   // Use best compare result if available, otherwise fall back to current page data
   const best = compareResults[0];
-  const retailer = best?.retailer || productInfo.host || “Unknown”;
-  const price = best?.price ?? parseFloat((productInfo.price || “”).replace(/[^0-9.]/g, “”)) || null;
+  const retailer = best?.retailer || productInfo.host || "Unknown";
+  const price = best?.price ?? parseFloat((productInfo.price || "").replace(/[^0-9.]/g, "")) || null;
   const trackUrl = best?.url || productInfo.url;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_products`, {
-      method: “POST”,
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, “Content-Type”: “application/json”, Prefer: “return=minimal” },
-      body: JSON.stringify({ user_id: session.user.id, product_name: productInfo.name, url: trackUrl, retailer, current_price: price, currency: “USD”, drop_threshold_pct: 5, scrape_status: “pending” }),
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ user_id: session.user.id, product_name: productInfo.name, url: trackUrl, retailer, current_price: price, currency: "USD", drop_threshold_pct: 5, scrape_status: "pending" }),
     });
-    if (res.status === 401) { session = null; chrome.storage.local.remove(“sb_session”); $(“sq-auth”).style.display = “”; btn.disabled = false; btn.textContent = “♡ Track this product”; return; }
-    btn.className = “sq-btn-track sq-tracked”; btn.textContent = “✓ Tracked”; btn.disabled = true;
-    $(“sq-hint”).innerHTML = `<a href=”${SCOUTIQ_URL}/dashboard” target=”_blank”>View in watchlist ↗</a>`;
-    $(“sq-auth”).style.display = “none”;
+    if (res.status === 401) { session = null; chrome.storage.local.remove("sb_session"); $("sq-auth").style.display = ""; btn.disabled = false; btn.textContent = "♡ Track this product"; return; }
+    btn.className = "sq-btn-track sq-tracked"; btn.textContent = "✓ Tracked"; btn.disabled = true;
+    $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/dashboard" target="_blank">View in watchlist ↗</a>`;
+    $("sq-auth").style.display = "none";
   } catch {
-    btn.disabled = false; btn.textContent = “♡ Track this product”;
-    $(“sq-hint”).textContent = “Error — try again.”;
+    btn.disabled = false; btn.textContent = "♡ Track this product";
+    $("sq-hint").textContent = "Error — try again.";
   }
 }
 
