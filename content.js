@@ -784,6 +784,7 @@ function saveStoredProduct(product) {
 
 // ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
+  if (injected) return; // __sq_toggle already ran, skip
   const { sq_pill_on, sq_auto_open } = await chrome.storage.local.get(["sq_pill_on", "sq_auto_open"]);
   console.log("[ScoutIQ] boot() — sq_pill_on:", sq_pill_on);
   if (!sq_pill_on) return;
@@ -867,7 +868,18 @@ navObserver.observe(document.body || document.documentElement, {
   subtree: true,
 });
 
-// Initial load
+// Exposed globally so background.js can call it directly via executeScript func:
+window.__sq_toggle = async (on) => {
+  if (on) {
+    session = await loadSession();
+    const stored = await loadStoredProduct();
+    _applyPillOn(stored);
+  } else {
+    _applyPillOff();
+  }
+};
+
+// Initial load — skip if __sq_toggle already fired first (prevents double-inject)
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 800));
 } else {
