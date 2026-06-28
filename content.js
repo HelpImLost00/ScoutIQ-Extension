@@ -223,15 +223,26 @@ const CSS = `
     font-size: 13px; line-height: 1.4;
   }
   #sq-pill {
-    display: flex; align-items: center; gap: 7px;
-    background: #7c3aed; color: #fff; border: none;
-    border-radius: 999px; padding: 9px 15px 9px 10px; cursor: grab;
+    display: flex; align-items: center;
+    background: #7c3aed; border-radius: 999px; cursor: grab;
     box-shadow: 0 4px 20px rgba(124,58,237,0.45);
-    font-size: 13px; font-weight: 600; transition: background 0.15s, transform 0.1s;
-    white-space: nowrap; font-family: inherit;
+    transition: transform 0.1s; overflow: hidden;
   }
-  #sq-pill:hover { background: #6d28d9; transform: scale(1.03); }
   #sq-pill.sq-dragging { cursor: grabbing; }
+  #sq-pill-main {
+    display: flex; align-items: center; gap: 7px;
+    background: none; border: none; color: #fff;
+    padding: 9px 13px 9px 10px; cursor: pointer;
+    font-size: 13px; font-weight: 600; white-space: nowrap; font-family: inherit;
+    transition: background 0.12s;
+  }
+  #sq-pill-main:hover { background: rgba(255,255,255,0.1); }
+  #sq-pill-gear {
+    background: none; border: none; border-left: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.75); padding: 9px 10px; cursor: pointer;
+    font-size: 13px; line-height: 1; transition: background 0.12s, color 0.12s;
+  }
+  #sq-pill-gear:hover { background: rgba(255,255,255,0.15); color: #fff; }
   #sq-panel {
     display: none; width: 340px; background: #0f0f0f;
     border: 1px solid #2a2a2a; border-radius: 12px;
@@ -249,6 +260,8 @@ const CSS = `
   .sq-header.sq-dragging { cursor: grabbing; }
   .sq-close { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
   .sq-close:hover { color: #f0f0f0; background: #1e1e1e; }
+  .sq-back { background: none; border: none; color: #7c3aed; font-size: 11px; font-weight: 600; cursor: pointer; padding: 2px 6px; border-radius: 4px; margin-right: 4px; font-family: inherit; }
+  .sq-back:hover { background: #1a1220; }
   .sq-body { padding: 11px 13px; max-height: 480px; overflow-y: auto; }
   .sq-product { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 10px; }
   .sq-product img { width: 44px; height: 44px; border-radius: 6px; border: 1px solid #222; object-fit: contain; background: #1a1a1a; flex-shrink: 0; }
@@ -291,18 +304,33 @@ const CSS = `
   .sq-auth-footer { margin-top: 6px; text-align: center; font-size: 10px; color: #555; }
   .sq-auth-footer a { color: #7c3aed; text-decoration: none; }
   .sq-error { text-align: center; font-size: 11px; color: #888; padding: 12px 0; }
+  .sq-settings { padding: 11px 13px; }
+  .sq-settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
+  .sq-settings-row:last-child { border-bottom: none; }
+  .sq-settings-label { font-size: 12px; color: #e0e0e0; font-weight: 500; }
+  .sq-settings-desc { font-size: 10px; color: #555; margin-top: 2px; }
+  .sq-toggle { position: relative; width: 34px; height: 19px; flex-shrink: 0; }
+  .sq-toggle input { opacity: 0; width: 0; height: 0; }
+  .sq-toggle-slider { position: absolute; inset: 0; background: #2a2a2a; border-radius: 19px; cursor: pointer; transition: background 0.2s; }
+  .sq-toggle-slider:before { content: ""; position: absolute; width: 13px; height: 13px; left: 3px; top: 3px; background: #666; border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+  .sq-toggle input:checked + .sq-toggle-slider { background: #7c3aed; }
+  .sq-toggle input:checked + .sq-toggle-slider:before { transform: translateX(15px); background: #fff; }
 `;
 
 const HTML = `
   <div id="sq-wrap">
-    <button id="sq-pill"><span>⚡</span><span>Compare prices</span></button>
+    <div id="sq-pill">
+      <button id="sq-pill-main"><span>⚡</span><span>Compare prices</span></button>
+      <button id="sq-pill-gear" title="Settings">⚙</button>
+    </div>
     <div id="sq-panel">
       <div class="sq-header" id="sq-header">
+        <button class="sq-back" id="sq-back" style="display:none">← Back</button>
         <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">⚡</div>ScoutIQ</a>
-        <span class="sq-version">v1.3 · June 27 · 9:05 PM</span>
+        <span class="sq-version">v1.4 · June 27</span>
         <button class="sq-close" id="sq-close">✕</button>
       </div>
-      <div class="sq-body">
+      <div class="sq-body" id="sq-main-body">
         <div class="sq-product" id="sq-product" style="display:none">
           <img id="sq-img" style="display:none" />
           <div>
@@ -325,6 +353,18 @@ const HTML = `
           <div class="sq-auth-error" id="sq-auth-error"></div>
           <button class="sq-btn-login" id="sq-btn-login">Sign in</button>
           <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free ↗</a></div>
+        </div>
+      </div>
+      <div class="sq-settings" id="sq-settings-body" style="display:none">
+        <div class="sq-settings-row">
+          <div>
+            <div class="sq-settings-label">Auto-open on product pages</div>
+            <div class="sq-settings-desc">Detect and open automatically when visiting a product</div>
+          </div>
+          <label class="sq-toggle">
+            <input type="checkbox" id="sq-auto-open" />
+            <span class="sq-toggle-slider"></span>
+          </label>
         </div>
       </div>
     </div>
@@ -380,9 +420,24 @@ function setPillEnabled(val) {
 }
 
 // ─── Panel ────────────────────────────────────────────────────────────────────
+function openSettings() {
+  $("sq-panel").style.display = "block";
+  $("sq-pill").style.display = "none";
+  $("sq-main-body").style.display = "none";
+  $("sq-settings-body").style.display = "";
+  $("sq-back").style.display = "";
+  $("sq-logo-link").style.display = "none";
+}
+function closeSettings() {
+  $("sq-settings-body").style.display = "none";
+  $("sq-main-body").style.display = "";
+  $("sq-back").style.display = "none";
+  $("sq-logo-link").style.display = "";
+}
 function openPanel() {
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
+  closeSettings();
   if (!productInfo) {
     // Non-product page — show placeholder message
     $("sq-product").style.display = "none";
@@ -399,6 +454,7 @@ function openPanel() {
 function closePanel() {
   $("sq-panel").style.display = "none";
   $("sq-pill").style.display = "flex";
+  closeSettings();
 }
 
 function renderProduct(info) {
@@ -676,18 +732,28 @@ function inject(info) {
   wrap.innerHTML = HTML;
   shadow.appendChild(wrap);
 
-  $("sq-pill").addEventListener("click", openPanel);
+  $("sq-pill-main").addEventListener("click", openPanel);
+  $("sq-pill-gear").addEventListener("click", openSettings);
   $("sq-close").addEventListener("click", closePanel);
+  $("sq-back").addEventListener("click", closeSettings);
   $("sq-btn-track").addEventListener("click", handleTrack);
   $("sq-btn-login").addEventListener("click", handleSignIn);
   $("sq-password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleSignIn(); });
-  // Logo link in header: don't let it start a drag
   $("sq-logo-link").addEventListener("mousedown", (e) => e.stopPropagation());
 
-  // Clicking the header (without dragging) minimizes the panel
+  // Header click (not on buttons) minimizes
   $("sq-header").addEventListener("click", (e) => {
-    if (e.target.id === "sq-close" || (e.target.closest && e.target.closest("#sq-logo-link"))) return;
+    const t = e.target;
+    if (t.id === "sq-close" || t.id === "sq-back" || (t.closest && t.closest("#sq-logo-link"))) return;
     closePanel();
+  });
+
+  // Auto-open toggle
+  chrome.storage.local.get(["sq_auto_open"], (d) => {
+    $("sq-auto-open").checked = !!d.sq_auto_open;
+  });
+  $("sq-auto-open").addEventListener("change", (e) => {
+    chrome.storage.local.set({ sq_auto_open: e.target.checked });
   });
 
   const sqWrap = $("sq-wrap");
@@ -710,30 +776,39 @@ function saveStoredProduct(product) {
 
 // ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
-  const enabled = await isPillEnabled();
-  if (!enabled) return;
+  const { sq_pill_on, sq_auto_open } = await chrome.storage.local.get(["sq_pill_on", "sq_auto_open"]);
+  if (!sq_pill_on) return;
 
-  // Product comes from storage only — no auto-detection
-  const stored = await loadStoredProduct();
+  let stored = await loadStoredProduct();
+
+  // Auto-open: detect product from page and open panel immediately
+  if (sq_auto_open && isProductPage()) {
+    const detected = buildProductInfo();
+    if (detected) {
+      stored = detected;
+      saveStoredProduct(detected);
+    }
+  }
+
   productInfo = stored;
   compareResults = [];
   session = await loadSession();
   inject(stored);
+
+  if (sq_auto_open && stored && stored === buildProductInfo?.()) {
+    setTimeout(openPanel, 100); // open panel after DOM settles
+  }
 }
 
-async function showPill() {
-  await setPillEnabled(true);
-  const stored = await loadStoredProduct();
+function _applyPillOn(stored) {
   productInfo = stored;
   compareResults = [];
-  session = await loadSession();
   inject(stored);
 }
 
-async function hidePill() {
-  await setPillEnabled(false);
-  saveStoredProduct(null); // clear product so next toggle-on starts fresh
-  chrome.storage.local.remove("sq_pos"); // clear drag position so it returns to bottom-right
+function _applyPillOff() {
+  saveStoredProduct(null);
+  chrome.storage.local.remove("sq_pos");
   productInfo = null;
   compareResults = [];
   const host = document.getElementById("__scoutiq__");
@@ -742,17 +817,27 @@ async function hidePill() {
   injected = false;
 }
 
+// Storage listener — background.js toggles sq_pill_on; we react here
+chrome.storage.onChanged.addListener(async (changes, area) => {
+  if (area !== "local" || !("sq_pill_on" in changes)) return;
+  if (changes.sq_pill_on.newValue) {
+    session = await loadSession();
+    const stored = await loadStoredProduct();
+    _applyPillOn(stored);
+  } else {
+    _applyPillOff();
+  }
+});
+
 // Watch for SPA navigation — only reinject if the shadow DOM was removed by the framework
 let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
     setTimeout(async () => {
-      const enabled = await isPillEnabled();
-      if (!enabled) return;
-      // If our host element survived the navigation, leave it alone (product stays)
-      if (document.getElementById("__scoutiq__")) return;
-      // Shadow DOM was removed — reinject with whatever product is in storage
+      const { sq_pill_on } = await chrome.storage.local.get("sq_pill_on");
+      if (!sq_pill_on) return;
+      if (document.getElementById("__scoutiq__")) return; // still alive, leave it
       injected = false;
       const stored = await loadStoredProduct();
       productInfo = stored;
@@ -772,11 +857,3 @@ if (document.readyState === "loading") {
 } else {
   setTimeout(boot, 800);
 }
-
-// Expose toggle as a global so background.js can call it via executeScript
-// (avoids the message-passing dead zone on tabs that haven't been refreshed)
-window.__sq_toggle = async () => {
-  const on = await isPillEnabled();
-  if (on) await hidePill();
-  else await showPill();
-};
