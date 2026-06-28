@@ -795,8 +795,8 @@ async function boot() {
   session = await loadSession();
   inject(stored);
 
-  if (sq_auto_open && stored && stored === buildProductInfo?.()) {
-    setTimeout(openPanel, 100); // open panel after DOM settles
+  if (sq_auto_open && isProductPage() && stored) {
+    setTimeout(openPanel, 100);
   }
 }
 
@@ -820,6 +820,7 @@ function _applyPillOff() {
 // Storage listener — background.js toggles sq_pill_on; we react here
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area !== "local" || !("sq_pill_on" in changes)) return;
+  console.log("[ScoutIQ] storage change received — sq_pill_on:", changes.sq_pill_on.newValue);
   if (changes.sq_pill_on.newValue) {
     session = await loadSession();
     const stored = await loadStoredProduct();

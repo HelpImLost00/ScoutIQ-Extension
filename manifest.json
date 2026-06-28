@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ScoutIQ",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "See the best price and all-time low for any product — powered by ScoutIQ.",
   "action": {
     "default_title": "ScoutIQ — click to show/hide pill"
