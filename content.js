@@ -764,24 +764,201 @@ function handleImageDrop(imgEl) {
   productInfo = product;
   compareResults = [];
   saveStoredProduct(product);
-  playImageReadAnim(imgEl);
-  renderProduct(product);
-  $("sq-panel").style.display = "block";
-  $("sq-pill").style.display = "none";
-  $("sq-spinner").style.display = "";
-  $("sq-results").style.display = "none";
-  $("sq-error").style.display = "none";
-  fetchPrices();
+  playImageReadAnim(imgEl, () => {
+    renderProduct(product);
+    $("sq-panel").style.display = "block";
+    $("sq-pill").style.display = "none";
+    $("sq-spinner").style.display = "";
+    $("sq-results").style.display = "none";
+    $("sq-error").style.display = "none";
+    fetchPrices();
+  });
 }
 
 // ─── Image reading animation (injected into page DOM over the image) ──────────
-let _readImgStyle = "focus";
+let _readImgStyle = "chomp";
 let _trailStyle = "dots";
 
-function playImageReadAnim(imgEl) {
-  if (_readImgStyle === "none" || !imgEl) return;
+// ─── Elaborate chomp: pill splits, grows, flies at image, snaps shut ──────────
+function playChompElaborate(imgEl, onReady) {
+  const imgRect = imgEl.getBoundingClientRect();
+  if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
+
+  const host = document.getElementById("__scoutiq__");
+  const wrapEl = host?.shadowRoot?.querySelector("#sq-wrap");
+  const pillRect = wrapEl?.getBoundingClientRect();
+
+  const imgCX = imgRect.left + imgRect.width / 2;
+  const imgCY = imgRect.top + imgRect.height / 2;
+  const startCX = pillRect ? pillRect.left + pillRect.width / 2 : imgCX;
+  const startCY = pillRect ? pillRect.top + pillRect.height / 2 : imgRect.top - 70;
+  const startW  = pillRect ? pillRect.width  : 150;
+  const startHH = Math.max(14, pillRect ? pillRect.height / 2 : 22);
+
+  // Big mouth sized to swallow the image
+  const bigW  = Math.min(Math.max(imgRect.width * 1.12, 200), window.innerWidth * 0.82);
+  const bigHH = Math.max(bigW * 0.23, 44);
+
+  const stage = document.createElement("div");
+  stage.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:2147483646;`;
+  document.body.appendChild(stage);
+
+  // Hide the actual pill for the duration so jaws replace it visually
+  if (wrapEl) wrapEl.style.visibility = "hidden";
+
+  function makeTeeth(n, isTop, h) {
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;width:100%;height:${h}px;flex-shrink:0;`;
+    for (let i = 0; i < n; i++) {
+      const t = document.createElement("div");
+      t.style.cssText = `flex:1;height:100%;background:#fff;
+        clip-path:${isTop ? "polygon(8% 0%,92% 0%,50% 100%)" : "polygon(50% 0%,92% 100%,8% 100%)"};
+        filter:drop-shadow(0 1px 2px rgba(0,0,0,0.25));`;
+      row.appendChild(t);
+    }
+    return row;
+  }
+
+  // Build a jaw half. isTop=true → top half (bottom edge has teeth), sits above cy.
+  function makeJaw(isTop, cx, cy, w, hh, nTeeth) {
+    const el = document.createElement("div");
+    const toothH = Math.max(8, hh * 0.52);
+    el.style.cssText = `
+      position:fixed;
+      left:${cx - w / 2}px;
+      top:${isTop ? cy - hh : cy}px;
+      width:${w}px; height:${hh}px;
+      background:linear-gradient(${isTop ? "180deg" : "0deg"},#6d28d9,#7c3aed);
+      border-radius:${isTop ? "999px 999px 0 0" : "0 0 999px 999px"};
+      display:flex; flex-direction:column;
+      justify-content:${isTop ? "flex-end" : "flex-start"};
+      box-shadow:${isTop
+        ? "0 -4px 20px rgba(124,58,237,0.5), inset 0 4px 10px rgba(255,255,255,0.1)"
+        : "0 4px 20px rgba(124,58,237,0.5), inset 0 -4px 10px rgba(255,255,255,0.1)"};
+    `;
+    el.appendChild(makeTeeth(nTeeth, isTop, toothH));
+    stage.appendChild(el);
+    return el;
+  }
+
+  const nSmall = Math.max(3, Math.floor(startW / 15));
+  const nBig   = Math.max(5, Math.floor(bigW / 24));
+
+  // Start closed: both jaws meet at the pill's center Y
+  const topJ = makeJaw(true,  startCX, startCY, startW, startHH, nSmall);
+  const botJ = makeJaw(false, startCX, startCY, startW, startHH, nSmall);
+
+  function tr(el, dur, ease, styles) {
+    el.style.transition = `all ${dur}ms ${ease}`;
+    requestAnimationFrame(() => requestAnimationFrame(() => Object.assign(el.style, styles)));
+  }
+
+  // Phase 1 — crack open at pill size, showing teeth
+  const openSmall = startHH * 0.95;
+  setTimeout(() => {
+    tr(topJ, 260, "cubic-bezier(0.34,1.56,0.64,1)", {
+      top: `${startCY - startHH - openSmall}px`
+    });
+    tr(botJ, 260, "cubic-bezier(0.34,1.56,0.64,1)", {
+      top: `${startCY + openSmall}px`
+    });
+  }, 20);
+
+  // Phase 2 — launch at image and inflate to match its width
+  const openBig = bigHH * 0.85;
+  setTimeout(() => {
+    tr(topJ, 400, "cubic-bezier(0.4,0,0.2,1)", {
+      left: `${imgCX - bigW / 2}px`,
+      top:  `${imgCY - bigHH - openBig}px`,
+      width: `${bigW}px`, height: `${bigHH}px`,
+      borderRadius: "999px 999px 0 0",
+    });
+    tr(botJ, 400, "cubic-bezier(0.4,0,0.2,1)", {
+      left: `${imgCX - bigW / 2}px`,
+      top:  `${imgCY + openBig}px`,
+      width: `${bigW}px`, height: `${bigHH}px`,
+      borderRadius: "0 0 999px 999px",
+    });
+  }, 360);
+
+  // Phase 3 — SNAP SHUT over the image
+  setTimeout(() => {
+    tr(topJ, 110, "cubic-bezier(0.25,0,0.5,1)", { top: `${imgCY - bigHH}px` });
+    tr(botJ, 110, "cubic-bezier(0.25,0,0.5,1)", { top: `${imgCY}px` });
+
+    // Bright flash as jaws close
+    const flash = document.createElement("div");
+    flash.style.cssText = `position:fixed;
+      left:${imgRect.left}px; top:${imgRect.top}px;
+      width:${imgRect.width}px; height:${imgRect.height}px;
+      background:#fff; opacity:0.9; pointer-events:none; z-index:2147483645;`;
+    stage.appendChild(flash);
+    setTimeout(() => { flash.style.transition = "opacity 0.28s"; flash.style.opacity = "0"; }, 60);
+    setTimeout(() => flash.remove(), 370);
+
+    // Signal to open the panel right as the jaws bite
+    onReady();
+  }, 820);
+
+  // Phase 4 — bite mark appears, jaws launch off-screen
+  setTimeout(() => {
+    addBiteMarkSVG(imgRect);
+    tr(topJ, 340, "cubic-bezier(0.4,0,1,1)", {
+      top: `${-bigHH * 3}px`, opacity: "0",
+    });
+    tr(botJ, 340, "cubic-bezier(0.4,0,1,1)", {
+      top: `${window.innerHeight + bigHH * 2}px`, opacity: "0",
+    });
+    setTimeout(() => {
+      if (wrapEl) wrapEl.style.visibility = "visible";
+      stage.remove();
+    }, 380);
+  }, 1030);
+}
+
+function addBiteMarkSVG(rect) {
+  const w = rect.width, h = rect.height;
+  const barH = Math.min(h * 0.3, 55);
+  const n = Math.max(2, Math.floor(w / 50));
+  const r = (w / n) / 2.7;
+
+  // Rectangle with upward semicircle bites along the bottom edge
+  // CW path so interior fills: top-left → top-right → bottom-right → bites left → bottom-left
+  let d = `M 0 0 L ${w} 0 L ${w} ${barH}`;
+  for (let i = n - 1; i >= 0; i--) {
+    const cx = (w / n) * (i + 0.5);
+    d += ` L ${cx + r} ${barH} A ${r} ${r} 0 0 1 ${cx - r} ${barH}`;
+  }
+  d += ` L 0 ${barH} Z`;
+
+  const el = document.createElement("div");
+  el.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
+    pointer-events:none;z-index:2147483645;`;
+  el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${barH}">
+    <defs>
+      <filter id="sq-bite-blur"><feGaussianBlur stdDeviation="1.5"/></filter>
+    </defs>
+    <path d="${d}" fill="rgba(124,58,237,0.55)" filter="url(#sq-bite-blur)"/>
+    <path d="${d}" fill="rgba(124,58,237,0.3)"/>
+  </svg>`;
+  document.body.appendChild(el);
+
+  setTimeout(() => { el.style.transition = "opacity 1.1s ease"; el.style.opacity = "0"; }, 700);
+  setTimeout(() => el.remove(), 1900);
+}
+
+function playImageReadAnim(imgEl, onReady = () => {}) {
+  if (_readImgStyle === "none" || !imgEl) { onReady(); return; }
   const rect = imgEl.getBoundingClientRect();
-  if (rect.width < 10 || rect.height < 10) return;
+  if (rect.width < 10 || rect.height < 10) { onReady(); return; }
+
+  if (_readImgStyle === "chomp") {
+    playChompElaborate(imgEl, onReady);
+    return;
+  }
+
+  // All non-chomp styles open the panel immediately then run animation in parallel
+  onReady();
 
   const wrap = document.createElement("div");
   wrap.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
@@ -789,49 +966,7 @@ function playImageReadAnim(imgEl) {
     pointer-events:none;z-index:2147483646;overflow:hidden;border-radius:6px;`;
   document.body.appendChild(wrap);
 
-  if (_readImgStyle === "chomp") {
-    // Row of teeth chomps down from the top of the image — the signature animation
-    const numTeeth = Math.max(4, Math.floor(rect.width / 22));
-    const tw = rect.width / numTeeth;
-    const th = Math.min(32, tw * 1.1);
-
-    // Upper jaw — purple bar with white downward teeth
-    const jaw = document.createElement("div");
-    jaw.style.cssText = `position:absolute;left:0;right:0;top:0;height:${th}px;
-      background:#7c3aed;display:flex;align-items:flex-end;
-      transform:translateY(-100%);z-index:2;
-      transition:transform 0.18s cubic-bezier(0.25,0,0.5,1.5);`;
-    for (let i = 0; i < numTeeth; i++) {
-      const tooth = document.createElement("div");
-      tooth.style.cssText = `flex:1;height:${th * 0.65}px;background:#fff;
-        clip-path:polygon(8% 0%,92% 0%,50% 100%);`;
-      jaw.appendChild(tooth);
-    }
-    wrap.appendChild(jaw);
-
-    // Overlay that fills in as the image is "eaten"
-    const bite = document.createElement("div");
-    bite.style.cssText = `position:absolute;left:0;right:0;top:0;height:0;
-      background:rgba(124,58,237,0.25);transition:height 0.6s ease;z-index:1;`;
-    wrap.appendChild(bite);
-
-    // Animate: chomp down twice
-    const doChomp = (retract) => new Promise(res => {
-      jaw.style.transform = retract ? "translateY(-100%)" : "translateY(0)";
-      setTimeout(res, 200);
-    });
-
-    (async () => {
-      await doChomp(false);         // bite down
-      bite.style.height = "35%";
-      await doChomp(true);          // retract
-      await new Promise(r => setTimeout(r, 80));
-      await doChomp(false);         // second bite
-      bite.style.height = "65%";
-      await doChomp(true);          // retract
-    })();
-
-  } else if (_readImgStyle === "focus") {
+  if (_readImgStyle === "focus") {
     const s = Math.min(28, rect.width * 0.28, rect.height * 0.28);
     const b = 3;
     const corners = [
@@ -1070,7 +1205,7 @@ function inject(info) {
   // Load all animation prefs
   chrome.storage.local.get(["sq_animation", "sq_read_animation", "sq_trail"], (d) => {
     applyPillAnimation(d.sq_animation ?? "pop");
-    _readImgStyle = d.sq_read_animation ?? "focus";
+    _readImgStyle = d.sq_read_animation ?? "chomp";
     _trailStyle   = d.sq_trail ?? "dots";
     $("sq-read-anim-select").value = _readImgStyle;
     $("sq-trail-select").value     = _trailStyle;
