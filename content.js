@@ -245,7 +245,7 @@ const CSS = `
   #sq-panel {
     display: none; width: 340px; background: #0f0f0f;
     border: 1px solid #2a2a2a; border-radius: 12px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.6); position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6); overflow: hidden; position: relative;
   }
   .sq-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -306,7 +306,7 @@ const CSS = `
   .sq-auth-footer { margin-top: 6px; text-align: center; font-size: 10px; color: #555; }
   .sq-auth-footer a { color: #7c3aed; text-decoration: none; }
   .sq-error { text-align: center; font-size: 11px; color: #888; padding: 12px 0; }
-  .sq-settings { position: absolute; top: 49px; left: 0; right: 0; background: #0f0f0f; border-top: 1px solid #1e1e1e; padding: 11px 13px; z-index: 5; }
+  .sq-settings { background: #0f0f0f; border-bottom: 1px solid #1e1e1e; padding: 11px 13px; }
   .sq-settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
   .sq-settings-row:last-child { border-bottom: none; }
   .sq-settings-label { font-size: 12px; color: #e0e0e0; font-weight: 500; }
@@ -327,9 +327,21 @@ const HTML = `
     <div id="sq-panel">
       <div class="sq-header" id="sq-header" draggable="false">
         <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">⚡</div>ScoutIQ</a>
-        <span class="sq-version">v1.4 · June 27</span>
+        <span class="sq-version">v1.4</span>
         <button class="sq-gear-btn" id="sq-gear-btn" title="Settings">⚙</button>
         <button class="sq-close" id="sq-close">✕</button>
+      </div>
+      <div class="sq-settings" id="sq-settings-body" style="display:none">
+        <div class="sq-settings-row">
+          <div>
+            <div class="sq-settings-label">Auto-show on product pages</div>
+            <div class="sq-settings-desc">Pill appears automatically on product pages (not search results)</div>
+          </div>
+          <label class="sq-toggle">
+            <input type="checkbox" id="sq-auto-open" />
+            <span class="sq-toggle-slider"></span>
+          </label>
+        </div>
       </div>
       <div class="sq-body" id="sq-main-body">
         <div class="sq-product" id="sq-product" style="display:none">
@@ -354,18 +366,6 @@ const HTML = `
           <div class="sq-auth-error" id="sq-auth-error"></div>
           <button class="sq-btn-login" id="sq-btn-login">Sign in</button>
           <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free ↗</a></div>
-        </div>
-      </div>
-      <div class="sq-settings" id="sq-settings-body" style="display:none">
-        <div class="sq-settings-row">
-          <div>
-            <div class="sq-settings-label">Auto-show on product pages</div>
-            <div class="sq-settings-desc">Pill appears automatically on product pages (not search results)</div>
-          </div>
-          <label class="sq-toggle">
-            <input type="checkbox" id="sq-auto-open" />
-            <span class="sq-toggle-slider"></span>
-          </label>
         </div>
       </div>
     </div>
