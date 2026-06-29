@@ -15,9 +15,9 @@ chrome.action.onClicked.addListener(async (tab) => {
       target: { tabId: tab.id },
       func: (msg) => {
         const b = document.createElement("div");
-        b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:orange;color:#000;padding:8px;font:bold 13px monospace;text-align:center;white-space:pre-wrap;";
-        b.textContent = "ScoutIQ files inject error: " + msg;
-        document.body.appendChild(b);
+        b.style.cssText = "position:fixed;top:44px;left:0;right:0;z-index:2147483648;background:orange;color:#000;padding:8px;font:bold 13px monospace;text-align:center;white-space:pre-wrap;";
+        b.textContent = "ScoutIQ inject error: " + msg;
+        document.body.appendChild(b); setTimeout(() => b.remove(), 10000);
       },
       args: [String(err)],
     }).catch(() => {});
