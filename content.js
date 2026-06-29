@@ -359,9 +359,13 @@ const HTML = `
       <div class="sq-settings" id="sq-settings-body" style="display:none">
         <div class="sq-settings-row">
           <div>
-            <div class="sq-settings-label">How to use</div>
-            <div class="sq-settings-desc">Drag the pill onto any product image to compare prices</div>
+            <div class="sq-settings-label">Auto-show on product pages</div>
+            <div class="sq-settings-desc">Pill appears automatically on product pages (not search results)</div>
           </div>
+          <label class="sq-toggle">
+            <input type="checkbox" id="sq-auto-open" />
+            <span class="sq-toggle-slider"></span>
+          </label>
         </div>
       </div>
     </div>
@@ -749,11 +753,19 @@ function inject(info) {
   });
 
 
+  // Auto-show toggle
+  chrome.storage.local.get(["sq_auto_open"], (d) => {
+    $("sq-auto-open").checked = d.sq_auto_open !== false;
+  });
+  $("sq-auto-open").addEventListener("change", (e) => {
+    chrome.storage.local.set({ sq_auto_open: e.target.checked });
+    if (!e.target.checked) pillOff();
+  });
+
   const sqWrap = $("sq-wrap");
   makeDraggable($("sq-pill"), sqWrap, handleImageDrop);
   makeDraggable($("sq-header"), sqWrap, handleImageDrop);
 
-  // Always start at bottom-right on toggle-on — no saved position restored
   if (info) renderProduct(info);
   injected = true;
 }
@@ -777,14 +789,46 @@ function pillOff() {
   injected = false;
 }
 
+// Auto-show pill on product pages (toggle-controlled)
+async function boot() {
+  if (injected) return;
+  const { sq_auto_open } = await chrome.storage.local.get(["sq_auto_open"]);
+  if (sq_auto_open === false) return;
+  if (!isProductPage()) return;
+  session = await loadSession();
+  inject(null); // pill appears empty — drag it onto a product image to identify
+}
+
+// Disconnect any old SPA observer before registering a new one
+if (window.__sq_nav_observer) window.__sq_nav_observer.disconnect();
+let lastUrl = location.href;
+const navObserver = new MutationObserver(() => {
+  if (location.href === lastUrl) return;
+  lastUrl = location.href;
+  pillOff();
+  setTimeout(boot, 800);
+});
+window.__sq_nav_observer = navObserver;
+navObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+
 window.__sq_toggle = async (on) => {
   if (on) {
     session = await loadSession();
-    inject(null); // pill floats empty — user drags it onto a product image
+    inject(null); // pill floats empty — drag onto a product image to identify
   } else {
     pillOff();
   }
 };
+
+// Only run boot on real first load, not on re-injection by background.js
+if (!window.__sq_toggle_registered) {
+  window.__sq_toggle_registered = true;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 600));
+  } else {
+    setTimeout(boot, 600);
+  }
+}
 
 } catch(e) {
   console.error("[ScoutIQ] INIT FAILED:", e);
