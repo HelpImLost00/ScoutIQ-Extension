@@ -256,24 +256,6 @@ const CSS = `
   #sq-pill.sq-anim-glow    { animation: sq-glow-pulse 0.7s ease-in-out 2; }
   #sq-pill.sq-anim-breathe { animation: sq-breathe 2.8s ease-in-out infinite; }
 
-  /* ── Reading animations ── */
-  @keyframes sq-scan-sweep {
-    0%   { background-position: -150% center; }
-    100% { background-position: 250% center; }
-  }
-  @keyframes sq-radar-ring {
-    0%   { box-shadow: 0 4px 20px rgba(124,58,237,0.5), 0 0 0 0px rgba(124,58,237,0.5); }
-    60%  { box-shadow: 0 4px 20px rgba(124,58,237,0.3), 0 0 0 18px rgba(124,58,237,0); }
-    100% { box-shadow: 0 4px 20px rgba(124,58,237,0.5), 0 0 0 0px rgba(124,58,237,0); }
-  }
-  #sq-pill.sq-reading-scan {
-    background: linear-gradient(105deg, #7c3aed 0%, #7c3aed 40%, #c4b5fd 50%, #7c3aed 60%, #7c3aed 100%);
-    background-size: 300% 100%;
-    animation: sq-scan-sweep 0.7s ease-in-out infinite;
-  }
-  #sq-pill.sq-reading-radar {
-    animation: sq-radar-ring 0.75s ease-out infinite;
-  }
   #sq-pill-main {
     display: flex; align-items: center; gap: 7px;
     background: none; border: none; color: #fff;
@@ -396,11 +378,24 @@ const HTML = `
         <div class="sq-settings-row">
           <div>
             <div class="sq-settings-label">Reading product</div>
-            <div class="sq-settings-desc">Animation while extracting product details</div>
+            <div class="sq-settings-desc">Effect on the image while extracting details</div>
           </div>
           <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
-            <option value="scan">Scan beam</option>
-            <option value="radar">Radar pulse</option>
+            <option value="focus">Focus brackets</option>
+            <option value="scanline">Scan line</option>
+            <option value="glow">Glow border</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="sq-settings-row">
+          <div>
+            <div class="sq-settings-label">Movement trail</div>
+            <div class="sq-settings-desc">Effect left behind while dragging the pill</div>
+          </div>
+          <select id="sq-trail-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
+            <option value="dots">Pac-Man dots</option>
+            <option value="sparkle">Sparkles</option>
+            <option value="comet">Comet tail</option>
             <option value="none">None</option>
           </select>
         </div>
@@ -708,6 +703,7 @@ function makeDraggable(handle, wrap, onDrop) {
       wrap.style.left = left + "px";
       wrap.style.top = top + "px";
       wrap.style.right = "auto";
+      emitTrail(ev.clientX, ev.clientY);
       wrap.style.bottom = "auto";
 
       // Highlight product image under cursor as a drop hint
@@ -766,7 +762,7 @@ function handleImageDrop(imgEl) {
   productInfo = product;
   compareResults = [];
   saveStoredProduct(product);
-  startReadingAnim();
+  playImageReadAnim(imgEl);
   renderProduct(product);
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
@@ -776,20 +772,120 @@ function handleImageDrop(imgEl) {
   fetchPrices();
 }
 
-// ─── Reading animation ────────────────────────────────────────────────────────
-function startReadingAnim() {
-  chrome.storage.local.get(["sq_read_animation"], (d) => {
-    const style = d.sq_read_animation ?? "scan";
-    const pill = $("sq-pill");
-    if (!pill || style === "none") return;
-    pill.classList.remove("sq-reading-scan", "sq-reading-radar");
-    pill.classList.add(style === "radar" ? "sq-reading-radar" : "sq-reading-scan");
-  });
+// ─── Image reading animation (injected into page DOM over the image) ──────────
+let _readImgStyle = "focus";
+let _trailStyle = "dots";
+
+function playImageReadAnim(imgEl) {
+  if (_readImgStyle === "none" || !imgEl) return;
+  const rect = imgEl.getBoundingClientRect();
+  if (rect.width < 10 || rect.height < 10) return;
+
+  const wrap = document.createElement("div");
+  wrap.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
+    width:${rect.width}px;height:${rect.height}px;
+    pointer-events:none;z-index:2147483646;overflow:hidden;border-radius:6px;`;
+  document.body.appendChild(wrap);
+
+  if (_readImgStyle === "focus") {
+    const s = Math.min(28, rect.width * 0.28, rect.height * 0.28);
+    const b = 3;
+    const corners = [
+      { top:0,    left:0,  borderTop:b, borderLeft:b   },
+      { top:0,    right:0, borderTop:b, borderRight:b  },
+      { bottom:0, left:0,  borderBottom:b, borderLeft:b  },
+      { bottom:0, right:0, borderBottom:b, borderRight:b },
+    ];
+    corners.forEach(c => {
+      const d = document.createElement("div");
+      const pos = Object.entries(c)
+        .filter(([k]) => ["top","left","right","bottom"].includes(k))
+        .map(([k,v]) => `${k}:${v}px`).join(";");
+      const borders = Object.entries(c)
+        .filter(([k]) => k.startsWith("border"))
+        .map(([k,v]) => `${k.replace(/[A-Z]/g, m => "-"+m.toLowerCase())}:${v}px solid #7c3aed`).join(";");
+      d.style.cssText = `position:absolute;width:${s}px;height:${s}px;${pos};${borders};
+        opacity:0;transition:opacity 0.2s ease,transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        transform:scale(1.4);`;
+      wrap.appendChild(d);
+      requestAnimationFrame(() => { d.style.opacity = "1"; d.style.transform = "scale(1)"; });
+    });
+    const glow = document.createElement("div");
+    glow.style.cssText = `position:absolute;inset:0;
+      background:rgba(124,58,237,0.12);opacity:0;transition:opacity 0.3s;`;
+    wrap.appendChild(glow);
+    requestAnimationFrame(() => { glow.style.opacity = "1"; });
+
+  } else if (_readImgStyle === "scanline") {
+    const line = document.createElement("div");
+    line.style.cssText = `position:absolute;left:0;right:0;top:0;height:3px;
+      background:linear-gradient(90deg,transparent 0%,#7c3aed 30%,#c4b5fd 50%,#7c3aed 70%,transparent 100%);
+      box-shadow:0 0 10px 2px rgba(124,58,237,0.6);
+      transition:top 0.85s linear;`;
+    wrap.appendChild(line);
+    requestAnimationFrame(() => { line.style.top = rect.height - 3 + "px"; });
+
+  } else if (_readImgStyle === "glow") {
+    wrap.style.boxShadow = "0 0 0 0 rgba(124,58,237,0)";
+    wrap.style.transition = "box-shadow 0.3s ease";
+    requestAnimationFrame(() => {
+      wrap.style.boxShadow = "0 0 0 4px #7c3aed, 0 0 28px rgba(124,58,237,0.55)";
+    });
+  }
+
+  setTimeout(() => wrap.remove(), 950);
 }
-function stopReadingAnim() {
-  const pill = $("sq-pill");
-  if (pill) pill.classList.remove("sq-reading-scan", "sq-reading-radar");
+
+// ─── Movement trail ───────────────────────────────────────────────────────────
+let _lastTrailTime = 0;
+function emitTrail(x, y) {
+  const now = Date.now();
+  const interval = _trailStyle === "comet" ? 30 : 70;
+  if (now - _lastTrailTime < interval) return;
+  _lastTrailTime = now;
+  if (_trailStyle === "none") return;
+
+  const el = document.createElement("div");
+  document.body.appendChild(el);
+
+  if (_trailStyle === "dots") {
+    const size = 8 + Math.random() * 4;
+    el.style.cssText = `position:fixed;left:${x - size/2}px;top:${y - size/2}px;
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:#7c3aed;opacity:0.75;pointer-events:none;z-index:2147483645;
+      transition:opacity 0.55s ease,transform 0.55s ease;`;
+    requestAnimationFrame(() => { el.style.opacity="0"; el.style.transform="scale(0)"; });
+    setTimeout(() => el.remove(), 600);
+
+  } else if (_trailStyle === "sparkle") {
+    const chars = ["✦","✧","⬡","◆","✺"];
+    el.textContent = chars[Math.floor(Math.random() * chars.length)];
+    const size = 10 + Math.random() * 8;
+    const dx = (Math.random() - 0.5) * 20;
+    const dy = -(Math.random() * 16 + 8);
+    el.style.cssText = `position:fixed;left:${x - size/2}px;top:${y - size/2}px;
+      font-size:${size}px;color:#a855f7;opacity:0.9;pointer-events:none;
+      z-index:2147483645;transition:opacity 0.6s ease,transform 0.6s ease;`;
+    requestAnimationFrame(() => {
+      el.style.opacity="0";
+      el.style.transform=`translate(${dx}px,${dy}px) scale(0)`;
+    });
+    setTimeout(() => el.remove(), 650);
+
+  } else if (_trailStyle === "comet") {
+    const size = 5 + Math.random() * 3;
+    el.style.cssText = `position:fixed;left:${x - size/2}px;top:${y - size/2}px;
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:radial-gradient(circle, #c4b5fd, #7c3aed);
+      opacity:0.85;pointer-events:none;z-index:2147483645;
+      transition:opacity 0.35s ease,transform 0.35s ease;`;
+    requestAnimationFrame(() => { el.style.opacity="0"; el.style.transform="scale(0.2)"; });
+    setTimeout(() => el.remove(), 400);
+  }
 }
+
+function startReadingAnim() {} // kept for compat — now handled by playImageReadAnim
+function stopReadingAnim() {}  // image overlays self-remove via setTimeout
 
 // ─── Animations ──────────────────────────────────────────────────────────────
 function applyPillAnimation(style) {
@@ -871,7 +967,12 @@ function inject(info) {
     applyPillAnimation(anim);
   });
   $("sq-read-anim-select").addEventListener("change", (e) => {
-    chrome.storage.local.set({ sq_read_animation: e.target.value });
+    _readImgStyle = e.target.value;
+    chrome.storage.local.set({ sq_read_animation: _readImgStyle });
+  });
+  $("sq-trail-select").addEventListener("change", (e) => {
+    _trailStyle = e.target.value;
+    chrome.storage.local.set({ sq_trail: _trailStyle });
   });
 
   const sqWrap = $("sq-wrap");
@@ -881,10 +982,13 @@ function inject(info) {
   // Restore saved position so pill appears in same spot across tabs
   loadStoredPos().then(pos => applyPos(sqWrap, pos));
 
-  // Play entrance animation based on user preference
-  chrome.storage.local.get(["sq_animation", "sq_read_animation"], (d) => {
+  // Load all animation prefs
+  chrome.storage.local.get(["sq_animation", "sq_read_animation", "sq_trail"], (d) => {
     applyPillAnimation(d.sq_animation ?? "pop");
-    $("sq-read-anim-select") && ($("sq-read-anim-select").value = d.sq_read_animation ?? "scan");
+    _readImgStyle = d.sq_read_animation ?? "focus";
+    _trailStyle   = d.sq_trail ?? "dots";
+    $("sq-read-anim-select").value = _readImgStyle;
+    $("sq-trail-select").value     = _trailStyle;
   });
 
   if (info) renderProduct(info);
