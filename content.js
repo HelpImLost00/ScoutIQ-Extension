@@ -246,16 +246,10 @@ const CSS = `
     transition: background 0.12s;
   }
   #sq-pill-main:hover { background: rgba(255,255,255,0.1); }
-  #sq-pill-gear {
-    background: none; border: none; border-left: 1px solid rgba(255,255,255,0.18);
-    color: rgba(255,255,255,0.75); padding: 9px 10px; cursor: pointer;
-    font-size: 13px; line-height: 1; transition: background 0.12s, color 0.12s;
-  }
-  #sq-pill-gear:hover { background: rgba(255,255,255,0.15); color: #fff; }
   #sq-panel {
     display: none; width: 340px; background: #0f0f0f;
     border: 1px solid #2a2a2a; border-radius: 12px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.6); overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6); overflow: hidden; position: relative;
   }
   .sq-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -271,6 +265,9 @@ const CSS = `
   .sq-close:hover { color: #f0f0f0; background: #1e1e1e; }
   .sq-back { background: none; border: none; color: #7c3aed; font-size: 11px; font-weight: 600; cursor: pointer; padding: 2px 6px; border-radius: 4px; margin-right: 4px; font-family: inherit; }
   .sq-back:hover { background: #1a1220; }
+  .sq-gear-btn { background: none; border: none; color: #555; font-size: 14px; cursor: pointer; padding: 2px 5px; border-radius: 4px; line-height: 1; margin-right: 2px; transition: color 0.12s, background 0.12s; }
+  .sq-gear-btn:hover { color: #f0f0f0; background: #1e1e1e; }
+  .sq-gear-btn.sq-active { color: #7c3aed; }
   .sq-body { padding: 11px 13px; max-height: 480px; overflow-y: auto; }
   .sq-product { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 10px; }
   .sq-product img { width: 44px; height: 44px; border-radius: 6px; border: 1px solid #222; object-fit: contain; background: #1a1a1a; flex-shrink: 0; }
@@ -313,7 +310,7 @@ const CSS = `
   .sq-auth-footer { margin-top: 6px; text-align: center; font-size: 10px; color: #555; }
   .sq-auth-footer a { color: #7c3aed; text-decoration: none; }
   .sq-error { text-align: center; font-size: 11px; color: #888; padding: 12px 0; }
-  .sq-settings { padding: 11px 13px; }
+  .sq-settings { position: absolute; top: 49px; left: 0; right: 0; bottom: 0; background: #0f0f0f; border-top: 1px solid #1e1e1e; padding: 11px 13px; overflow-y: auto; z-index: 5; }
   .sq-settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
   .sq-settings-row:last-child { border-bottom: none; }
   .sq-settings-label { font-size: 12px; color: #e0e0e0; font-weight: 500; }
@@ -330,13 +327,12 @@ const HTML = `
   <div id="sq-wrap">
     <div id="sq-pill">
       <button id="sq-pill-main"><span>⚡</span><span>Compare prices</span></button>
-      <button id="sq-pill-gear" title="Settings">⚙</button>
     </div>
     <div id="sq-panel">
-      <div class="sq-header" id="sq-header">
-        <button class="sq-back" id="sq-back" style="display:none">← Back</button>
+      <div class="sq-header" id="sq-header" draggable="false">
         <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">⚡</div>ScoutIQ</a>
         <span class="sq-version">v1.4 · June 27</span>
+        <button class="sq-gear-btn" id="sq-gear-btn" title="Settings">⚙</button>
         <button class="sq-close" id="sq-close">✕</button>
       </div>
       <div class="sq-body" id="sq-main-body">
@@ -430,18 +426,16 @@ function setPillEnabled(val) {
 
 // ─── Panel ────────────────────────────────────────────────────────────────────
 function openSettings() {
-  $("sq-panel").style.display = "block";
-  $("sq-pill").style.display = "none";
-  $("sq-main-body").style.display = "none";
-  $("sq-settings-body").style.display = "";
-  $("sq-back").style.display = "";
-  $("sq-logo-link").style.display = "none";
+  $("sq-settings-body").style.display = "block";
+  $("sq-gear-btn").classList.add("sq-active");
 }
 function closeSettings() {
   $("sq-settings-body").style.display = "none";
-  $("sq-main-body").style.display = "";
-  $("sq-back").style.display = "none";
-  $("sq-logo-link").style.display = "";
+  $("sq-gear-btn").classList.remove("sq-active");
+}
+function toggleSettings() {
+  const isOpen = $("sq-settings-body").style.display !== "none";
+  if (isOpen) closeSettings(); else openSettings();
 }
 function openPanel() {
   $("sq-panel").style.display = "block";
@@ -742,18 +736,26 @@ function inject(info) {
   shadow.appendChild(wrap);
 
   $("sq-pill-main").addEventListener("click", openPanel);
-  $("sq-pill-gear").addEventListener("click", openSettings);
+  $("sq-gear-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleSettings(); });
   $("sq-close").addEventListener("click", closePanel);
-  $("sq-back").addEventListener("click", closeSettings);
   $("sq-btn-track").addEventListener("click", handleTrack);
   $("sq-btn-login").addEventListener("click", handleSignIn);
   $("sq-password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleSignIn(); });
   $("sq-logo-link").addEventListener("mousedown", (e) => e.stopPropagation());
 
+  // Click outside settings dropdown to close it
+  shadow.addEventListener("click", (e) => {
+    if ($("sq-settings-body").style.display !== "none" &&
+        !e.target.closest("#sq-settings-body") &&
+        !e.target.closest("#sq-gear-btn")) {
+      closeSettings();
+    }
+  });
+
   // Header click (not on buttons) minimizes
   $("sq-header").addEventListener("click", (e) => {
     const t = e.target;
-    if (t.id === "sq-close" || t.id === "sq-back" || (t.closest && t.closest("#sq-logo-link"))) return;
+    if (t.id === "sq-close" || t.id === "sq-gear-btn" || (t.closest && t.closest("#sq-logo-link"))) return;
     closePanel();
   });
 
