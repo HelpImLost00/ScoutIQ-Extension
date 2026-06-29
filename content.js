@@ -577,7 +577,7 @@ async function handleTrack() {
   // Use best compare result if available, otherwise fall back to current page data
   const best = compareResults[0];
   const retailer = best?.retailer || productInfo.host || "Unknown";
-  const price = best?.price ?? parseFloat((productInfo.price || "").replace(/[^0-9.]/g, "")) || null;
+  const price = (best?.price ?? parseFloat((productInfo.price || "").replace(/[^0-9.]/g, ""))) || null;
   const trackUrl = best?.url || productInfo.url;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_products`, {
