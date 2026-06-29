@@ -383,6 +383,7 @@ const HTML = `
           <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
             <option value="chomp">Chomp 👾</option>
             <option value="absorb">Absorb ✨</option>
+            <option value="wand">Wand 🪄</option>
             <option value="focus">Focus brackets</option>
             <option value="scanline">Scan line</option>
             <option value="glow">Glow border</option>
@@ -692,33 +693,49 @@ function makeDraggable(handle, wrap, onDrop) {
     const rect = wrap.getBoundingClientRect();
     const offX = e.clientX - rect.left, offY = e.clientY - rect.top;
     let moved = false;
-    let hlImg = null; // currently highlighted drop-target image
+    let hlImg = null;
+    let pendingX = e.clientX, pendingY = e.clientY;
+    let rafPending = false;
+    let dropCheckFrame = 0; // throttle elementsFromPoint
 
     const onMove = (ev) => {
+      pendingX = ev.clientX;
+      pendingY = ev.clientY;
+
       if (!moved && Math.abs(ev.clientX - startX) < 5 && Math.abs(ev.clientY - startY) < 5) return;
       if (!moved) {
         moved = true;
         handle.classList.add("sq-dragging");
         document.body.style.userSelect = "none";
+        // Kill any transitions so position snaps instantly to cursor
+        wrap.style.transition = "none";
+        wrap.style.willChange = "left, top";
       }
-      const left = Math.max(4, Math.min(window.innerWidth - wrap.offsetWidth - 4, ev.clientX - offX));
-      const top = Math.max(4, Math.min(window.innerHeight - wrap.offsetHeight - 4, ev.clientY - offY));
-      wrap.style.left = left + "px";
-      wrap.style.top = top + "px";
-      wrap.style.right = "auto";
-      emitTrail(ev.clientX, ev.clientY);
-      wrap.style.bottom = "auto";
 
-      // Highlight product image under cursor as a drop hint
-      if (onDrop) {
-        const under = document.elementsFromPoint(ev.clientX, ev.clientY);
-        const imgEl = under.find(el => el.tagName === "IMG" && !el.closest("#__scoutiq__") && (el.naturalWidth > 30 || el.width > 30));
-        if (imgEl !== hlImg) {
-          if (hlImg) { hlImg.style.outline = ""; hlImg.style.borderRadius = ""; }
-          hlImg = imgEl || null;
-          if (hlImg) { hlImg.style.outline = "3px solid #7c3aed"; hlImg.style.borderRadius = "6px"; }
+      emitTrail(ev.clientX, ev.clientY);
+
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const left = Math.max(4, Math.min(window.innerWidth  - wrap.offsetWidth  - 4, pendingX - offX));
+        const top  = Math.max(4, Math.min(window.innerHeight - wrap.offsetHeight - 4, pendingY - offY));
+        wrap.style.left   = left + "px";
+        wrap.style.top    = top  + "px";
+        wrap.style.right  = "auto";
+        wrap.style.bottom = "auto";
+
+        // elementsFromPoint is expensive — only run every 3 frames
+        if (onDrop && ++dropCheckFrame % 3 === 0) {
+          const under = document.elementsFromPoint(pendingX, pendingY);
+          const imgEl = under.find(el => el.tagName === "IMG" && !el.closest("#__scoutiq__") && (el.naturalWidth > 30 || el.width > 30));
+          if (imgEl !== hlImg) {
+            if (hlImg) { hlImg.style.outline = ""; hlImg.style.borderRadius = ""; }
+            hlImg = imgEl || null;
+            if (hlImg) { hlImg.style.outline = "3px solid #7c3aed"; hlImg.style.borderRadius = "6px"; }
+          }
         }
-      }
+      });
     };
 
     const onUp = () => {
@@ -726,6 +743,8 @@ function makeDraggable(handle, wrap, onDrop) {
       document.removeEventListener("mouseup", onUp);
       handle.classList.remove("sq-dragging");
       document.body.style.userSelect = "";
+      wrap.style.transition  = "";
+      wrap.style.willChange  = "auto";
       if (hlImg) { hlImg.style.outline = ""; hlImg.style.borderRadius = ""; }
       if (moved) {
         const r = wrap.getBoundingClientRect();
@@ -1225,18 +1244,18 @@ function playDrainAnim(imgEl, onReady) {
         const spY   = imgRect.top  + Math.random() * imgRect.height * prog;
         const dur   = 0.30 + Math.random() * 0.40;
         const col   = `hsl(${Math.random()*360},88%,66%)`;
+        // Position via left/top only once, then animate purely with transform (GPU path)
         p.style.cssText = `position:fixed;left:${spX}px;top:${spY}px;
           width:${sz}px;height:${sz}px;border-radius:50%;
           background:${col};box-shadow:0 0 ${sz*1.6}px ${col};
-          pointer-events:none;z-index:2147483645;
-          transition:left ${dur}s ease-in,top ${dur}s ease-in,
-            opacity ${dur}s ease-in,transform ${dur}s ease-in;`;
+          pointer-events:none;z-index:2147483645;will-change:transform,opacity;`;
         document.body.appendChild(p);
+        const tx = pCX - sz/2 - spX;
+        const ty = pCY - sz/2 - spY;
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          p.style.left = `${pCX - sz/2}px`;
-          p.style.top  = `${pCY - sz/2}px`;
-          p.style.opacity   = "0";
-          p.style.transform = "scale(0.1)";
+          p.style.transition = `transform ${dur}s ease-in, opacity ${dur}s ease-in`;
+          p.style.transform  = `translate(${tx}px,${ty}px) scale(0.1)`;
+          p.style.opacity    = "0";
         }));
         setTimeout(() => p.remove(), dur * 1000 + 200);
       }
@@ -1321,6 +1340,299 @@ function playDrainAnim(imgEl, onReady) {
   }, 1580);
 }
 
+// ─── Wand: materializes, charges, casts lightning bolt, stamps rune circle ────
+function playWandAnim(imgEl, onReady) {
+  const imgRect = imgEl.getBoundingClientRect();
+  if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
+
+  const host   = document.getElementById("__scoutiq__");
+  const wrapEl = host?.shadowRoot?.querySelector("#sq-wrap");
+  const pR     = wrapEl?.getBoundingClientRect();
+  const pCX    = pR ? pR.left + pR.width  / 2 : imgRect.left + imgRect.width  / 2;
+  const pCY    = pR ? pR.top  + pR.height / 2 : imgRect.top  - 50;
+  const imgCX  = imgRect.left + imgRect.width  / 2;
+  const imgCY  = imgRect.top  + imgRect.height / 2;
+
+  const stage = document.createElement("div");
+  stage.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:2147483646;`;
+  document.body.appendChild(stage);
+
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.style.cssText = `position:absolute;inset:0;width:100%;height:100%;overflow:visible;`;
+  stage.appendChild(svg);
+
+  const defs = document.createElementNS(ns, "defs");
+  svg.appendChild(defs);
+
+  function se(tag, attrs) {
+    const el = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+  function filter(id, blur, x = "-50%", y = "-50%", w = "200%", h = "200%") {
+    const f = se("filter", { id, x, y, width: w, height: h });
+    const b = se("feGaussianBlur", { stdDeviation: blur, result: "b" });
+    const m = se("feMerge", {});
+    m.appendChild(se("feMergeNode", { in: "b" }));
+    m.appendChild(se("feMergeNode", { in: "SourceGraphic" }));
+    f.appendChild(b); f.appendChild(m); defs.appendChild(f);
+  }
+  filter("sq-w-glow",  "3");
+  filter("sq-w-tip",   "5", "-150%", "-150%", "400%", "400%");
+  filter("sq-w-bolt",  "2.5");
+  filter("sq-w-rune",  "2");
+
+  // Wand geometry: points from pill outward at angle toward image
+  const ang      = Math.atan2(imgCY - pCY, imgCX - pCX);
+  const perp     = ang + Math.PI / 2;
+  const wandLen  = 95;
+  const tipX = pCX + Math.cos(ang) * wandLen;
+  const tipY = pCY + Math.sin(ang) * wandLen;
+  const basX = pCX - Math.cos(ang) * 10;
+  const basY = pCY - Math.sin(ang) * 10;
+
+  // Wand gradient
+  const wg = se("linearGradient", { id:"sq-wg", gradientUnits:"userSpaceOnUse",
+    x1:basX, y1:basY, x2:tipX, y2:tipY });
+  wg.appendChild(se("stop", { offset:"0%",   "stop-color":"#1a0530" }));
+  wg.appendChild(se("stop", { offset:"55%",  "stop-color":"#4c1d95" }));
+  wg.appendChild(se("stop", { offset:"100%", "stop-color":"#8b5cf6" }));
+  defs.appendChild(wg);
+
+  // ── Wand shaft (tapered quad) + crystal tip star ──────────────────────────
+  const bw = 7, tw2 = 2.5;
+  const shaftPath =
+    `M ${basX + Math.cos(perp)*bw/2} ${basY + Math.sin(perp)*bw/2}
+     L ${tipX + Math.cos(perp)*tw2/2} ${tipY + Math.sin(perp)*tw2/2}
+     L ${tipX - Math.cos(perp)*tw2/2} ${tipY - Math.sin(perp)*tw2/2}
+     L ${basX - Math.cos(perp)*bw/2} ${basY - Math.sin(perp)*bw/2} Z`;
+
+  const shaft = se("path", { d:shaftPath, fill:"url(#sq-wg)", filter:"url(#sq-w-glow)", opacity:"0" });
+  shaft.style.cssText = "transition:opacity 0.22s ease;";
+  svg.appendChild(shaft);
+
+  // Knot rings along shaft
+  [0.25, 0.5, 0.72].forEach(t => {
+    const kx = basX + Math.cos(ang)*(wandLen + 10)*t;
+    const ky = basY + Math.sin(ang)*(wandLen + 10)*t;
+    const kr = (bw/2) * (1 - t * 0.5) + 1;
+    const knot = se("ellipse", { cx:kx, cy:ky,
+      rx: kr * 1.2, ry: kr * 0.7,
+      fill:"#2e1065", stroke:"#6d28d9", "stroke-width":"0.8", opacity:"0" });
+    knot.style.cssText = "transition:opacity 0.22s ease;";
+    svg.appendChild(knot);
+    setTimeout(() => { knot.style.opacity = "0.9"; }, 80);
+  });
+
+  // 4-point star crystal tip
+  function starD(cx, cy, r, pts, inner) {
+    let d = "";
+    for (let i = 0; i < pts * 2; i++) {
+      const a = (i / (pts * 2)) * Math.PI * 2 - Math.PI / 2;
+      const ri = i % 2 === 0 ? r : r * inner;
+      d += (i === 0 ? "M" : "L") + `${cx + Math.cos(a)*ri} ${cy + Math.sin(a)*ri}`;
+    }
+    return d + "Z";
+  }
+  const tipStar = se("path", { d: starD(tipX, tipY, 9, 4, 0.4),
+    fill:"#ddd6fe", filter:"url(#sq-w-tip)", opacity:"0" });
+  tipStar.style.cssText = "transition:opacity 0.2s ease;";
+  svg.appendChild(tipStar);
+
+  // Wand materializes
+  setTimeout(() => { shaft.style.opacity = "1"; tipStar.style.opacity = "1"; }, 30);
+
+  // ── Charge phase: CSS orbital rings around tip ────────────────────────────
+  const chargeSty = document.createElement("style");
+  chargeSty.textContent = `
+    @keyframes sq-orbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes sq-orbit-ccw { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+    @keyframes sq-tip-pulse {
+      0%,100%{filter:brightness(1)} 50%{filter:brightness(1.8) saturate(2)}
+    }`;
+  document.head.appendChild(chargeSty);
+
+  // Spawn 3 orbital rings, each a different radius and speed
+  const orbiters = [];
+  [[18, "0.7s", "sq-orbit", "#c4b5fd"],
+   [26, "1.1s", "sq-orbit-ccw", "#a78bfa"],
+   [34, "0.9s", "sq-orbit", "#7c3aed"]].forEach(([r, spd, anim, col], i) => {
+    const ring = document.createElement("div");
+    ring.style.cssText = `position:fixed;left:${tipX}px;top:${tipY}px;
+      width:${r*2}px;height:${r*2}px;
+      margin-left:${-r}px;margin-top:${-r}px;
+      border-radius:50%;
+      border:1.5px solid ${col};
+      box-shadow:0 0 6px ${col};
+      pointer-events:none;z-index:2147483645;
+      animation:${anim} ${spd} linear infinite;
+      opacity:0;transition:opacity 0.3s;`;
+    document.body.appendChild(ring);
+    orbiters.push(ring);
+    setTimeout(() => { ring.style.opacity = "0.75"; }, 350 + i * 80);
+
+    // Spawn charged sparkles in each orbit
+    const spawnOrbiter = () => {
+      if (!ring.isConnected) return;
+      const p = document.createElement("div");
+      const sz = 3 + Math.random() * 4;
+      const a = Math.random() * Math.PI * 2;
+      p.style.cssText = `position:fixed;
+        left:${tipX + Math.cos(a)*r - sz/2}px;
+        top:${tipY + Math.sin(a)*r - sz/2}px;
+        width:${sz}px;height:${sz}px;border-radius:50%;
+        background:${col};box-shadow:0 0 ${sz*2.5}px ${col};
+        pointer-events:none;z-index:2147483645;
+        transition:opacity 0.5s ease;`;
+      document.body.appendChild(p);
+      setTimeout(() => { p.style.opacity = "0"; }, 80);
+      setTimeout(() => p.remove(), 600);
+    };
+    const sparkInt = setInterval(spawnOrbiter, 120 + i * 40);
+    orbiters.push({ remove: () => clearInterval(sparkInt), isConnected: true });
+  });
+
+  // Tip pulse during charge
+  tipStar.style.animation = "sq-tip-pulse 0.6s ease-in-out infinite";
+
+  // ── Cast: collapse orbiters, draw lightning bolt, impact ──────────────────
+  setTimeout(() => {
+    // Collapse all orbiters into tip (flash of energy)
+    orbiters.forEach(o => {
+      if (o.style) { o.style.transition = "all 0.18s ease-in"; o.style.transform = "scale(0)"; o.style.opacity = "0"; setTimeout(() => o.remove?.(), 200); }
+      else o.remove?.();
+    });
+    tipStar.style.animation = "";
+    tipStar.style.filter = "url(#sq-w-tip)";
+
+    // Wind-up glow burst at tip
+    const burst = se("circle", { cx:tipX, cy:tipY, r:"4", fill:"#fff", filter:"url(#sq-w-tip)", opacity:"1" });
+    svg.appendChild(burst);
+    burst.style.cssText = "transition:r 0.12s ease-out,opacity 0.12s ease;";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      burst.setAttribute("r", "24");
+      burst.style.opacity = "0";
+    }));
+    setTimeout(() => burst.remove(), 200);
+
+    // Lightning bolt (jagged multi-segment path)
+    function jag(x1, y1, x2, y2, segs, spread) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      const px = -dy/d, py = dx/d;
+      let pts = [{x:x1, y:y1}];
+      for (let i = 1; i < segs; i++) {
+        const t = i / segs;
+        const off = (Math.random() - 0.5) * spread;
+        pts.push({ x: x1+dx*t + px*off, y: y1+dy*t + py*off });
+      }
+      pts.push({x:x2, y:y2});
+      return "M " + pts.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" L ");
+    }
+
+    const boltLen = Math.hypot(imgCX - tipX, imgCY - tipY) * 1.15;
+    // Core bolt (bright white/lavender)
+    const bolt1 = se("path", { d:jag(tipX,tipY,imgCX,imgCY,8,28),
+      stroke:"#e9d5ff", "stroke-width":"2", fill:"none",
+      "stroke-linecap":"round", "stroke-linejoin":"round",
+      "stroke-dasharray":boltLen, "stroke-dashoffset":boltLen,
+      filter:"url(#sq-w-bolt)" });
+    svg.appendChild(bolt1);
+
+    // Outer bolt (wider, violet)
+    const bolt2 = se("path", { d:jag(tipX,tipY,imgCX,imgCY,6,40),
+      stroke:"#7c3aed", "stroke-width":"4", fill:"none",
+      "stroke-linecap":"round", "stroke-linejoin":"round",
+      "stroke-dasharray":boltLen, "stroke-dashoffset":boltLen,
+      filter:"url(#sq-w-bolt)", opacity:"0.7" });
+    svg.insertBefore(bolt2, bolt1);
+
+    bolt2.style.transition = "stroke-dashoffset 0.18s ease-out";
+    bolt1.style.transition = "stroke-dashoffset 0.15s ease-out";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bolt2.setAttribute("stroke-dashoffset", "0");
+      bolt1.setAttribute("stroke-dashoffset", "0");
+    }));
+
+    // Bolts fade after drawn
+    setTimeout(() => {
+      [bolt1, bolt2].forEach(b => { b.style.transition="opacity 0.35s ease"; b.style.opacity="0"; });
+    }, 450);
+  }, 1050);
+
+  // ── Impact: sparks + rotating rune circle on image ─────────────────────────
+  setTimeout(() => {
+    // Sparks explode from image center
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement("div");
+      const sz  = 4 + Math.random() * 9;
+      const a   = (i/18)*Math.PI*2 + Math.random()*0.4;
+      const dst = 35 + Math.random() * 90;
+      const hue = 255 + Math.random() * 80;
+      const col = `hsl(${hue},88%,72%)`;
+      p.style.cssText = `position:fixed;left:${imgCX-sz/2}px;top:${imgCY-sz/2}px;
+        width:${sz}px;height:${sz}px;border-radius:50%;
+        background:${col};box-shadow:0 0 ${sz}px ${col};
+        pointer-events:none;z-index:2147483645;will-change:transform,opacity;`;
+      document.body.appendChild(p);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        p.style.transition = `transform ${0.38+Math.random()*0.3}s cubic-bezier(0,0,0.3,1),opacity ${0.38+Math.random()*0.3}s ease`;
+        p.style.transform  = `translate(${Math.cos(a)*dst}px,${Math.sin(a)*dst}px) scale(0)`;
+        p.style.opacity    = "0";
+      }));
+      setTimeout(() => p.remove(), 780);
+    }
+
+    // Rune circle SVG stamped on image
+    const rr = Math.min(imgRect.width, imgRect.height) * 0.34;
+    const rg = se("g", { filter:"url(#sq-w-rune)", opacity:"0" });
+    rg.style.cssText = "transition:opacity 0.3s ease;transform-box:fill-box;";
+    rg.appendChild(se("circle", { cx:imgCX,cy:imgCY,r:rr, fill:"none", stroke:"#a78bfa","stroke-width":"1.5" }));
+    rg.appendChild(se("circle", { cx:imgCX,cy:imgCY,r:rr*0.68, fill:"none", stroke:"#7c3aed","stroke-width":"1","stroke-dasharray":"5 7" }));
+    rg.appendChild(se("circle", { cx:imgCX,cy:imgCY,r:rr*0.35, fill:"rgba(109,40,217,0.12)",stroke:"#c4b5fd","stroke-width":"0.8" }));
+    const syms = ["✦","◈","⬡","★","◆","✧"];
+    for (let i = 0; i < 6; i++) {
+      const a = (i/6)*Math.PI*2 - Math.PI/2;
+      const lx1 = imgCX + Math.cos(a)*rr*0.36, ly1 = imgCY + Math.sin(a)*rr*0.36;
+      const lx2 = imgCX + Math.cos(a)*rr*0.95, ly2 = imgCY + Math.sin(a)*rr*0.95;
+      rg.appendChild(se("line", { x1:lx1,y1:ly1,x2:lx2,y2:ly2,stroke:"#6d28d9","stroke-width":"0.8",opacity:"0.7" }));
+      const tx = document.createElementNS(ns, "text");
+      Object.entries({ x:imgCX+Math.cos(a)*rr*0.65, y:imgCY+Math.sin(a)*rr*0.65+3.5,
+        "text-anchor":"middle","dominant-baseline":"middle",
+        fill:"#c4b5fd","font-size":"10",opacity:"0.85" }).forEach(([k,v]) => tx.setAttribute(k,v));
+      tx.textContent = syms[i];
+      rg.appendChild(tx);
+    }
+    svg.appendChild(rg);
+    requestAnimationFrame(() => requestAnimationFrame(() => { rg.style.opacity = "1"; }));
+
+    // Spin rune circle with rAF
+    let rot = 0;
+    const spin = () => {
+      rot += 0.45;
+      rg.style.transform = `rotate(${rot}deg)`;
+      rg.style.transformOrigin = `${imgCX}px ${imgCY}px`;
+      if (rot < 108) requestAnimationFrame(spin);
+      else {
+        rg.style.transition = "opacity 0.6s ease";
+        rg.style.opacity = "0";
+        setTimeout(() => rg.remove(), 700);
+      }
+    };
+    requestAnimationFrame(spin);
+
+    onReady();
+  }, 1280);
+
+  // ── Wand fades out ─────────────────────────────────────────────────────────
+  setTimeout(() => {
+    [shaft, tipStar].forEach(el => { el.style.opacity = "0"; });
+    chargeSty.remove();
+    setTimeout(() => stage.remove(), 600);
+  }, 1600);
+}
+
 function playImageReadAnim(imgEl, onReady = () => {}) {
   if (_readImgStyle === "none" || !imgEl) { onReady(); return; }
   const rect = imgEl.getBoundingClientRect();
@@ -1333,6 +1645,11 @@ function playImageReadAnim(imgEl, onReady = () => {}) {
 
   if (_readImgStyle === "absorb") {
     playDrainAnim(imgEl, onReady);
+    return;
+  }
+
+  if (_readImgStyle === "wand") {
+    playWandAnim(imgEl, onReady);
     return;
   }
 
