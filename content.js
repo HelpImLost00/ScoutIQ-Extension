@@ -382,6 +382,7 @@ const HTML = `
           </div>
           <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
             <option value="chomp">Chomp 👾</option>
+            <option value="absorb">Absorb ✨</option>
             <option value="focus">Focus brackets</option>
             <option value="scanline">Scan line</option>
             <option value="glow">Glow border</option>
@@ -1109,6 +1110,217 @@ function addBiteMarkSVG(rect) {
   setTimeout(() => el.remove(), 2200);
 }
 
+// ─── Absorb: beam connects pill to image, colors drain into pill ──────────────
+function playDrainAnim(imgEl, onReady) {
+  const imgRect = imgEl.getBoundingClientRect();
+  if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
+
+  const host   = document.getElementById("__scoutiq__");
+  const wrapEl = host?.shadowRoot?.querySelector("#sq-wrap");
+  const pR     = wrapEl?.getBoundingClientRect();
+  const pCX    = pR ? pR.left + pR.width  / 2 : imgRect.left + imgRect.width  / 2;
+  const pCY    = pR ? pR.top  + pR.height / 2 : imgRect.top  - 50;
+  const ancX   = imgRect.left + imgRect.width  / 2;  // where beam meets image
+  const ancY   = imgRect.top;
+
+  const stage = document.createElement("div");
+  stage.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:2147483646;`;
+  document.body.appendChild(stage);
+
+  // ── Beam: animated SVG path drawn from pill to image top ─────────────────
+  const ns  = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.style.cssText = `position:absolute;inset:0;width:100%;height:100%;overflow:visible;`;
+  stage.appendChild(svg);
+
+  const defs = document.createElementNS(ns, "defs");
+  svg.appendChild(defs);
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  // Gradient along the beam (pill colour → image anchor)
+  const grad = svgEl("linearGradient", {
+    id:"sq-d-grad", gradientUnits:"userSpaceOnUse",
+    x1:pCX, y1:pCY, x2:ancX, y2:ancY,
+  });
+  grad.appendChild(svgEl("stop", { offset:"0%",   "stop-color":"#a78bfa" }));
+  grad.appendChild(svgEl("stop", { offset:"100%",  "stop-color":"#7c3aed" }));
+  defs.appendChild(grad);
+
+  // Glow filter on beam
+  const gf = svgEl("filter", { id:"sq-d-glow", x:"-20%", y:"-20%", width:"140%", height:"140%" });
+  const fb = svgEl("feGaussianBlur", { stdDeviation:"2.5", result:"b" });
+  const fm = svgEl("feMerge", {}); fm.appendChild(svgEl("feMergeNode",{in:"b"})); fm.appendChild(svgEl("feMergeNode",{in:"SourceGraphic"}));
+  gf.appendChild(fb); gf.appendChild(fm); defs.appendChild(gf);
+
+  // Curved beam path (quadratic bezier for a natural arc)
+  const cpX = (pCX + ancX) / 2 + (Math.random() - 0.5) * 50;
+  const cpY = Math.min(pCY, ancY) - Math.abs(ancY - pCY) * 0.25;
+  const beamD = `M ${pCX} ${pCY} Q ${cpX} ${cpY} ${ancX} ${ancY}`;
+  const dx = ancX - pCX, dy = ancY - pCY;
+  const beamLen = Math.sqrt(dx*dx + dy*dy) * 1.08;
+
+  const beamPath = svgEl("path", {
+    d: beamD,
+    stroke: "url(#sq-d-grad)", "stroke-width":"3",
+    fill:"none", "stroke-linecap":"round",
+    "stroke-dasharray": beamLen,
+    "stroke-dashoffset": beamLen,
+    filter:"url(#sq-d-glow)",
+  });
+  svg.appendChild(beamPath);
+
+  // Draw beam (dash-offset trick)
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    beamPath.style.transition = "stroke-dashoffset 0.26s ease-out";
+    beamPath.setAttribute("stroke-dashoffset", "0");
+  }));
+
+  // ── Drain overlay: image copy with purple-grey filter sweeps top→bottom ───
+  const imgCS   = window.getComputedStyle(imgEl);
+  const imgCopy = document.createElement("img");
+  imgCopy.src = imgEl.src;
+  imgCopy.style.cssText = `position:fixed;
+    left:${imgRect.left}px; top:${imgRect.top}px;
+    width:${imgRect.width}px; height:${imgRect.height}px;
+    object-fit:${imgCS.objectFit || "cover"};
+    object-position:${imgCS.objectPosition || "center"};
+    filter:grayscale(1) brightness(0.48) sepia(0.5) hue-rotate(250deg) saturate(3);
+    clip-path:inset(100% 0 0 0);
+    pointer-events:none; z-index:2147483644; border-radius:4px;`;
+  document.body.appendChild(imgCopy);
+
+  // Bright scan edge that rides the drain line (gives it a "cutting" feel)
+  const drainEdge = document.createElement("div");
+  drainEdge.style.cssText = `position:fixed;
+    left:${imgRect.left - 2}px; top:${imgRect.top}px;
+    width:${imgRect.width + 4}px; height:4px;
+    background:linear-gradient(90deg,transparent 0%,#c4b5fd 20%,#fff 50%,#c4b5fd 80%,transparent 100%);
+    box-shadow:0 0 16px 4px rgba(167,139,250,0.9), 0 0 40px rgba(124,58,237,0.5);
+    pointer-events:none; z-index:2147483645;
+    transition:top 0.92s linear;`;
+  document.body.appendChild(drainEdge);
+
+  // Start sweep 300ms after beam connects
+  setTimeout(() => {
+    imgCopy.style.transition = "clip-path 0.92s linear";
+    imgCopy.style.clipPath = "inset(0% 0 0 0)";
+    drainEdge.style.top = `${imgRect.top + imgRect.height - 4}px`;
+  }, 300);
+
+  // ── Energy particles: colored dots travel from image to pill ──────────────
+  const drainStart = Date.now() + 300;
+  let pInt;
+  setTimeout(() => {
+    pInt = setInterval(() => {
+      for (let i = 0; i < 2; i++) {
+        const prog  = Math.min(1, (Date.now() - drainStart) / 920);
+        const p     = document.createElement("div");
+        const sz    = 4 + Math.random() * 9;
+        const spX   = imgRect.left + Math.random() * imgRect.width;
+        const spY   = imgRect.top  + Math.random() * imgRect.height * prog;
+        const dur   = 0.30 + Math.random() * 0.40;
+        const col   = `hsl(${Math.random()*360},88%,66%)`;
+        p.style.cssText = `position:fixed;left:${spX}px;top:${spY}px;
+          width:${sz}px;height:${sz}px;border-radius:50%;
+          background:${col};box-shadow:0 0 ${sz*1.6}px ${col};
+          pointer-events:none;z-index:2147483645;
+          transition:left ${dur}s ease-in,top ${dur}s ease-in,
+            opacity ${dur}s ease-in,transform ${dur}s ease-in;`;
+        document.body.appendChild(p);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          p.style.left = `${pCX - sz/2}px`;
+          p.style.top  = `${pCY - sz/2}px`;
+          p.style.opacity   = "0";
+          p.style.transform = "scale(0.1)";
+        }));
+        setTimeout(() => p.remove(), dur * 1000 + 200);
+      }
+    }, 48);
+    setTimeout(() => clearInterval(pInt), 1020);
+  }, 300);
+
+  // ── Pill absorption: expanding rings radiate outward as energy arrives ─────
+  const absorbSty = document.createElement("style");
+  absorbSty.textContent = `@keyframes sq-absorb-ring {
+    0%   { transform:scale(1);   opacity:0.9; }
+    100% { transform:scale(2.4); opacity:0;   }
+  }`;
+  document.head.appendChild(absorbSty);
+
+  const rW = (pR?.width  || 160) + 8;
+  const rH = (pR?.height || 44)  + 8;
+  const spawnRing = () => {
+    const r = document.createElement("div");
+    r.style.cssText = `position:fixed;
+      left:${pCX - rW/2}px; top:${pCY - rH/2}px;
+      width:${rW}px; height:${rH}px;
+      border-radius:999px;
+      border:2px solid rgba(167,139,250,0.9);
+      box-shadow:0 0 8px rgba(124,58,237,0.4);
+      pointer-events:none; z-index:2147483645;
+      animation:sq-absorb-ring 0.72s ease-out forwards;`;
+    stage.appendChild(r);
+    setTimeout(() => r.remove(), 760);
+  };
+  [240, 460, 660, 840, 980, 1090, 1190].forEach(t => setTimeout(spawnRing, t));
+
+  // ── Full-charge burst from pill + open panel ──────────────────────────────
+  setTimeout(() => {
+    // Bright flash on pill
+    const pillFlash = document.createElement("div");
+    pillFlash.style.cssText = `position:fixed;
+      left:${pCX - rW/2 - 8}px; top:${pCY - rH/2 - 8}px;
+      width:${rW+16}px; height:${rH+16}px;
+      border-radius:999px;
+      background:radial-gradient(ellipse,rgba(167,139,250,0.7),transparent 70%);
+      pointer-events:none; z-index:2147483645;
+      transition:opacity 0.45s ease;`;
+    stage.appendChild(pillFlash);
+    setTimeout(() => { pillFlash.style.opacity="0"; }, 50);
+
+    // Particle burst from pill outward
+    for (let i = 0; i < 20; i++) {
+      const p   = document.createElement("div");
+      const sz  = 5 + Math.random() * 11;
+      const ang = (i / 20) * Math.PI * 2 + Math.random() * 0.35;
+      const dst = 50 + Math.random() * 80;
+      const col = `hsl(${265 + Math.random()*60},85%,${58+Math.random()*22}%)`;
+      p.style.cssText = `position:fixed;left:${pCX-sz/2}px;top:${pCY-sz/2}px;
+        width:${sz}px;height:${sz}px;border-radius:50%;
+        background:${col};box-shadow:0 0 ${sz}px ${col};
+        pointer-events:none;z-index:2147483645;`;
+      stage.appendChild(p);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        p.style.transition = `all ${0.42+Math.random()*0.3}s cubic-bezier(0,0,0.3,1)`;
+        p.style.transform  = `translate(${Math.cos(ang)*dst}px,${Math.sin(ang)*dst}px) scale(0)`;
+        p.style.opacity    = "0";
+      }));
+      setTimeout(() => p.remove(), 600);
+    }
+
+    onReady();
+  }, 1340);
+
+  // ── Cleanup: fade drain copy away, restore ────────────────────────────────
+  setTimeout(() => {
+    imgCopy.style.transition  = "opacity 0.7s ease";
+    imgCopy.style.opacity     = "0";
+    drainEdge.remove();
+    beamPath.style.transition = "opacity 0.5s ease";
+    beamPath.style.opacity    = "0";
+    setTimeout(() => {
+      imgCopy.remove();
+      absorbSty.remove();
+      stage.remove();
+    }, 750);
+  }, 1580);
+}
+
 function playImageReadAnim(imgEl, onReady = () => {}) {
   if (_readImgStyle === "none" || !imgEl) { onReady(); return; }
   const rect = imgEl.getBoundingClientRect();
@@ -1116,6 +1328,11 @@ function playImageReadAnim(imgEl, onReady = () => {}) {
 
   if (_readImgStyle === "chomp") {
     playChompElaborate(imgEl, onReady);
+    return;
+  }
+
+  if (_readImgStyle === "absorb") {
+    playDrainAnim(imgEl, onReady);
     return;
   }
 
