@@ -245,7 +245,7 @@ const CSS = `
   #sq-panel {
     display: none; width: 340px; background: #0f0f0f;
     border: 1px solid #2a2a2a; border-radius: 12px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.6); overflow: hidden; position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6); position: relative;
   }
   .sq-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -264,7 +264,7 @@ const CSS = `
   .sq-gear-btn { background: none; border: none; color: #555; font-size: 14px; cursor: pointer; padding: 2px 5px; border-radius: 4px; line-height: 1; margin-right: 2px; transition: color 0.12s, background 0.12s; }
   .sq-gear-btn:hover { color: #f0f0f0; background: #1e1e1e; }
   .sq-gear-btn.sq-active { color: #7c3aed; }
-  .sq-body { padding: 11px 13px; max-height: 480px; overflow-y: auto; }
+  .sq-body { padding: 11px 13px; }
   .sq-product { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 10px; }
   .sq-product img { width: 44px; height: 44px; border-radius: 6px; border: 1px solid #222; object-fit: contain; background: #1a1a1a; flex-shrink: 0; }
   .sq-product-name { font-size: 12px; font-weight: 600; color: #e0e0e0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -306,7 +306,7 @@ const CSS = `
   .sq-auth-footer { margin-top: 6px; text-align: center; font-size: 10px; color: #555; }
   .sq-auth-footer a { color: #7c3aed; text-decoration: none; }
   .sq-error { text-align: center; font-size: 11px; color: #888; padding: 12px 0; }
-  .sq-settings { position: absolute; top: 49px; left: 0; right: 0; bottom: 0; background: #0f0f0f; border-top: 1px solid #1e1e1e; padding: 11px 13px; overflow-y: auto; z-index: 5; }
+  .sq-settings { position: absolute; top: 49px; left: 0; right: 0; background: #0f0f0f; border-top: 1px solid #1e1e1e; padding: 11px 13px; z-index: 5; }
   .sq-settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
   .sq-settings-row:last-child { border-bottom: none; }
   .sq-settings-label { font-size: 12px; color: #e0e0e0; font-weight: 500; }
@@ -759,7 +759,6 @@ function inject(info) {
   });
   $("sq-auto-open").addEventListener("change", (e) => {
     chrome.storage.local.set({ sq_auto_open: e.target.checked });
-    if (!e.target.checked) pillOff();
   });
 
   const sqWrap = $("sq-wrap");
