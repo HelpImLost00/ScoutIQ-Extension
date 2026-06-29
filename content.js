@@ -765,6 +765,9 @@ function inject(info) {
   makeDraggable($("sq-pill"), sqWrap, handleImageDrop);
   makeDraggable($("sq-header"), sqWrap, handleImageDrop);
 
+  // Restore saved position so pill appears in same spot across tabs
+  loadStoredPos().then(pos => applyPos(sqWrap, pos));
+
   if (info) renderProduct(info);
   injected = true;
 }
@@ -778,54 +781,70 @@ function saveStoredProduct(product) {
   else chrome.storage.local.remove("sq_last_product");
 }
 
-// ─── Toggle (called by background.js via executeScript) ──────────────────────
-function pillOff() {
+// ─── Pill state ───────────────────────────────────────────────────────────────
+function pillOff(saveState = false) {
   productInfo = null;
   compareResults = [];
   const host = document.getElementById("__scoutiq__");
   if (host) host.remove();
   shadow = null;
   injected = false;
+  if (saveState) chrome.storage.local.set({ sq_pill_active: false });
 }
 
-// Auto-show pill on product pages (toggle-controlled)
+async function pillOn(saveState = false) {
+  if (injected) return;
+  session = await loadSession();
+  inject(null);
+  if (saveState) chrome.storage.local.set({ sq_pill_active: true });
+}
+
+// Boot: runs once per real page load — check both explicit state and auto-detect
 async function boot() {
   if (injected) return;
-  const { sq_auto_open } = await chrome.storage.local.get(["sq_auto_open"]);
-  if (sq_auto_open === false) return;
+  const data = await chrome.storage.local.get(["sq_pill_active", "sq_auto_open"]);
+  if (data.sq_pill_active) { await pillOn(); return; }
+  if (data.sq_auto_open === false) return;
   if (!isProductPage()) return;
-  session = await loadSession();
-  inject(null); // pill appears empty — drag it onto a product image to identify
+  await pillOn();
 }
 
-// Disconnect any old SPA observer before registering a new one
+// SPA navigation — hide pill on URL change, re-run boot after page settles
 if (window.__sq_nav_observer) window.__sq_nav_observer.disconnect();
 let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
   if (location.href === lastUrl) return;
   lastUrl = location.href;
-  pillOff();
-  setTimeout(boot, 800);
+  pillOff(); // hide without clearing sq_pill_active
+  setTimeout(boot, 300);
 });
 window.__sq_nav_observer = navObserver;
 navObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
 
+// Cross-tab sync — react immediately when pill state changes in another tab
+if (!window.__sq_storage_listener) {
+  window.__sq_storage_listener = true;
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !("sq_pill_active" in changes)) return;
+    const active = changes.sq_pill_active.newValue;
+    if (active && !injected) pillOn();
+    else if (!active && injected) pillOff();
+  });
+}
+
+// Icon click toggle — saves state so all tabs stay in sync
 window.__sq_toggle = async (on) => {
-  if (on) {
-    session = await loadSession();
-    inject(null); // pill floats empty — drag onto a product image to identify
-  } else {
-    pillOff();
-  }
+  if (on) await pillOn(true);
+  else pillOff(true);
 };
 
-// Only run boot on real first load, not on re-injection by background.js
+// Boot: only on real first page load, not on re-injection
 if (!window.__sq_toggle_registered) {
   window.__sq_toggle_registered = true;
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 600));
+    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 50));
   } else {
-    setTimeout(boot, 600);
+    setTimeout(boot, 50);
   }
 }
 
