@@ -718,13 +718,14 @@ function handleImageDrop(imgEl) {
 
 // ─── Inject panel ─────────────────────────────────────────────────────────────
 function inject(info) {
-  // Remove existing panel before re-injecting
+  window.__sq_inject_step = "start";
   const existing = document.getElementById("__scoutiq__");
   if (existing) existing.remove();
-
+  window.__sq_inject_step = "creating-host";
   const host = document.createElement("div");
   host.id = "__scoutiq__";
   document.body.appendChild(host);
+  window.__sq_inject_step = "shadow";
   shadow = host.attachShadow({ mode: "open" });
 
   const styleEl = document.createElement("style");
@@ -734,7 +735,7 @@ function inject(info) {
   const wrap = document.createElement("div");
   wrap.innerHTML = HTML;
   shadow.appendChild(wrap);
-
+  window.__sq_inject_step = "listeners";
   $("sq-pill-main").addEventListener("click", openPanel);
   $("sq-gear-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleSettings(); });
   $("sq-close").addEventListener("click", closePanel);
@@ -814,13 +815,14 @@ async function boot() {
 }
 
 function _applyPillOn(stored) {
-  console.log("[ScoutIQ] _applyPillOn() — product:", stored?.name || "none");
   productInfo = stored;
   compareResults = [];
+  window.__sq_apply_called = true;
+  window.__sq_inject_error = null;
   try {
     inject(stored);
-    console.log("[ScoutIQ] inject() completed OK");
   } catch(e) {
+    window.__sq_inject_error = e.message;
     console.error("[ScoutIQ] inject() threw:", e);
   }
 }

@@ -49,10 +49,14 @@ chrome.action.onClicked.addListener(async (tab) => {
           return;
         }
         const host = document.getElementById("__scoutiq__");
+        const apply = !!window.__sq_apply_called;
+        const step = window.__sq_inject_step || "never";
+        const err = window.__sq_inject_error || "";
+        const ok = !!host;
         const b = document.createElement("div");
-        b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:" + (host ? "#1a7a1a" : "#c00") + ";color:#fff;padding:8px;font:bold 13px sans-serif;text-align:center;";
-        b.textContent = "ScoutIQ: " + status + " host:" + !!host;
-        document.body.appendChild(b); setTimeout(() => b.remove(), 10000);
+        b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:" + (ok ? "#1a7a1a" : "#c00") + ";color:#fff;padding:8px;font:bold 12px monospace;text-align:center;white-space:pre-wrap;";
+        b.textContent = status + " apply:" + apply + " step:" + step + " host:" + ok + (err ? "\nerr:" + err : "");
+        document.body.appendChild(b); setTimeout(() => b.remove(), 15000);
       },
       args: [next],
     });
