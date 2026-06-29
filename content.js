@@ -359,13 +359,9 @@ const HTML = `
       <div class="sq-settings" id="sq-settings-body" style="display:none">
         <div class="sq-settings-row">
           <div>
-            <div class="sq-settings-label">Auto-open on product pages</div>
-            <div class="sq-settings-desc">Detect and open automatically when visiting a product</div>
+            <div class="sq-settings-label">How to use</div>
+            <div class="sq-settings-desc">Drag the pill onto any product image to compare prices</div>
           </div>
-          <label class="sq-toggle">
-            <input type="checkbox" id="sq-auto-open" />
-            <span class="sq-toggle-slider"></span>
-          </label>
         </div>
       </div>
     </div>
@@ -752,14 +748,6 @@ function inject(info) {
     closePanel();
   });
 
-  // Auto-open toggle
-  chrome.storage.local.get(["sq_auto_open"], (d) => {
-    $("sq-auto-open").checked = d.sq_auto_open !== false;
-  });
-  $("sq-auto-open").addEventListener("change", (e) => {
-    chrome.storage.local.set({ sq_auto_open: e.target.checked });
-    if (!e.target.checked) _applyPillOff();
-  });
 
   const sqWrap = $("sq-wrap");
   makeDraggable($("sq-pill"), sqWrap, handleImageDrop);
@@ -779,36 +767,8 @@ function saveStoredProduct(product) {
   else chrome.storage.local.remove("sq_last_product");
 }
 
-// ─── Boot & SPA navigation ────────────────────────────────────────────────────
-async function boot() {
-  if (injected) return;
-  const { sq_auto_open } = await chrome.storage.local.get(["sq_auto_open"]);
-  const autoOpen = sq_auto_open !== false; // default true
-  if (!autoOpen || !isProductPage()) return;
-
-  session = await loadSession();
-  const detected = buildProductInfo();
-  const stored = detected || await loadStoredProduct();
-  if (detected) saveStoredProduct(detected);
-
-  productInfo = stored;
-  compareResults = [];
-  inject(stored);
-}
-
-function _applyPillOn(stored) {
-  productInfo = stored;
-  compareResults = [];
-  try {
-    inject(stored);
-  } catch(e) {
-    console.error("[ScoutIQ] inject() threw:", e);
-  }
-}
-
-function _applyPillOff() {
-  saveStoredProduct(null);
-  chrome.storage.local.remove("sq_pos");
+// ─── Toggle (called by background.js via executeScript) ──────────────────────
+function pillOff() {
   productInfo = null;
   compareResults = [];
   const host = document.getElementById("__scoutiq__");
@@ -817,53 +777,14 @@ function _applyPillOff() {
   injected = false;
 }
 
-// Toggle is driven by window.__sq_toggle called directly from background.js.
-// No storage listener needed — it caused double-inject races.
-
-// Watch for SPA navigation — disconnect any previous observer first (re-injection safe)
-if (window.__sq_nav_observer) { window.__sq_nav_observer.disconnect(); }
-let lastUrl = location.href;
-const navObserver = new MutationObserver(() => {
-  if (location.href !== lastUrl) {
-    lastUrl = location.href;
-    // Clean up current pill on navigation, then re-run boot
-    const existing = document.getElementById("__scoutiq__");
-    if (existing) existing.remove();
-    shadow = null;
-    injected = false;
-    compareResults = [];
-    setTimeout(boot, 800);
-  }
-});
-window.__sq_nav_observer = navObserver;
-navObserver.observe(document.body || document.documentElement, {
-  childList: true,
-  subtree: true,
-});
-
-// Exposed globally so background.js can call it directly via executeScript func:
 window.__sq_toggle = async (on) => {
   if (on) {
     session = await loadSession();
-    const detected = buildProductInfo();
-    const stored = detected || await loadStoredProduct();
-    if (detected) saveStoredProduct(detected);
-    _applyPillOn(stored);
+    inject(null); // pill floats empty — user drags it onto a product image
   } else {
-    _applyPillOff();
+    pillOff();
   }
 };
-
-// Only run boot() on the real first page load — not when background.js re-injects
-// to call __sq_toggle. Re-injections skip boot so hiding the pill sticks.
-const isFirstLoad = !window.__sq_toggle;
-if (isFirstLoad) {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 800));
-  } else {
-    setTimeout(boot, 800);
-  }
-}
 
 } catch(e) {
   console.error("[ScoutIQ] INIT FAILED:", e);
