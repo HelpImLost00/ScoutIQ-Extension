@@ -252,9 +252,28 @@ const CSS = `
     0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
     50%       { box-shadow: 0 4px 26px rgba(124,58,237,0.65); }
   }
-  #sq-pill.sq-anim-pop    { animation: sq-pop-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
-  #sq-pill.sq-anim-glow   { animation: sq-glow-pulse 0.7s ease-in-out 2; }
+  #sq-pill.sq-anim-pop     { animation: sq-pop-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+  #sq-pill.sq-anim-glow    { animation: sq-glow-pulse 0.7s ease-in-out 2; }
   #sq-pill.sq-anim-breathe { animation: sq-breathe 2.8s ease-in-out infinite; }
+
+  /* ── Reading animations ── */
+  @keyframes sq-scan-sweep {
+    0%   { background-position: -150% center; }
+    100% { background-position: 250% center; }
+  }
+  @keyframes sq-radar-ring {
+    0%   { box-shadow: 0 4px 20px rgba(124,58,237,0.5), 0 0 0 0px rgba(124,58,237,0.5); }
+    60%  { box-shadow: 0 4px 20px rgba(124,58,237,0.3), 0 0 0 18px rgba(124,58,237,0); }
+    100% { box-shadow: 0 4px 20px rgba(124,58,237,0.5), 0 0 0 0px rgba(124,58,237,0); }
+  }
+  #sq-pill.sq-reading-scan {
+    background: linear-gradient(105deg, #7c3aed 0%, #7c3aed 40%, #c4b5fd 50%, #7c3aed 60%, #7c3aed 100%);
+    background-size: 300% 100%;
+    animation: sq-scan-sweep 0.7s ease-in-out infinite;
+  }
+  #sq-pill.sq-reading-radar {
+    animation: sq-radar-ring 0.75s ease-out infinite;
+  }
   #sq-pill-main {
     display: flex; align-items: center; gap: 7px;
     background: none; border: none; color: #fff;
@@ -365,12 +384,23 @@ const HTML = `
         </div>
         <div class="sq-settings-row">
           <div>
-            <div class="sq-settings-label">Pill animation</div>
-            <div class="sq-settings-desc">Visual effect when the pill appears</div>
+            <div class="sq-settings-label">Pill entrance</div>
+            <div class="sq-settings-desc">Animation when the pill first appears</div>
           </div>
           <select id="sq-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
             <option value="pop">Spring pop</option>
             <option value="breathe">Breathe</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="sq-settings-row">
+          <div>
+            <div class="sq-settings-label">Reading product</div>
+            <div class="sq-settings-desc">Animation while extracting product details</div>
+          </div>
+          <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
+            <option value="scan">Scan beam</option>
+            <option value="radar">Radar pulse</option>
             <option value="none">None</option>
           </select>
         </div>
@@ -489,6 +519,7 @@ function closePanel() {
 }
 
 function renderProduct(info) {
+  stopReadingAnim();
   $("sq-product").style.display = "flex";
   $("sq-section-lbl").style.display = "";
   $("sq-product-name").textContent = info.name;
@@ -734,7 +765,8 @@ function handleImageDrop(imgEl) {
   };
   productInfo = product;
   compareResults = [];
-  saveStoredProduct(product); // persist so it survives tab switches and navigation
+  saveStoredProduct(product);
+  startReadingAnim();
   renderProduct(product);
   $("sq-panel").style.display = "block";
   $("sq-pill").style.display = "none";
@@ -742,6 +774,21 @@ function handleImageDrop(imgEl) {
   $("sq-results").style.display = "none";
   $("sq-error").style.display = "none";
   fetchPrices();
+}
+
+// ─── Reading animation ────────────────────────────────────────────────────────
+function startReadingAnim() {
+  chrome.storage.local.get(["sq_read_animation"], (d) => {
+    const style = d.sq_read_animation ?? "scan";
+    const pill = $("sq-pill");
+    if (!pill || style === "none") return;
+    pill.classList.remove("sq-reading-scan", "sq-reading-radar");
+    pill.classList.add(style === "radar" ? "sq-reading-radar" : "sq-reading-scan");
+  });
+}
+function stopReadingAnim() {
+  const pill = $("sq-pill");
+  if (pill) pill.classList.remove("sq-reading-scan", "sq-reading-radar");
 }
 
 // ─── Animations ──────────────────────────────────────────────────────────────
@@ -823,6 +870,9 @@ function inject(info) {
     chrome.storage.local.set({ sq_animation: anim });
     applyPillAnimation(anim);
   });
+  $("sq-read-anim-select").addEventListener("change", (e) => {
+    chrome.storage.local.set({ sq_read_animation: e.target.value });
+  });
 
   const sqWrap = $("sq-wrap");
   makeDraggable($("sq-pill"), sqWrap, handleImageDrop);
@@ -832,8 +882,9 @@ function inject(info) {
   loadStoredPos().then(pos => applyPos(sqWrap, pos));
 
   // Play entrance animation based on user preference
-  chrome.storage.local.get(["sq_animation"], (d) => {
+  chrome.storage.local.get(["sq_animation", "sq_read_animation"], (d) => {
     applyPillAnimation(d.sq_animation ?? "pop");
+    $("sq-read-anim-select") && ($("sq-read-anim-select").value = d.sq_read_animation ?? "scan");
   });
 
   if (info) renderProduct(info);
