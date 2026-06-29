@@ -234,6 +234,27 @@ const CSS = `
     transition: transform 0.1s; overflow: hidden;
   }
   #sq-pill.sq-dragging { cursor: grabbing; }
+
+  /* ── Micro interaction: spring entrance ── */
+  @keyframes sq-pop-in {
+    0%   { transform: scale(0.4); opacity: 0; }
+    65%  { transform: scale(1.12); opacity: 1; }
+    82%  { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  /* ── Micro interaction: attention glow pulse (plays once after entrance) ── */
+  @keyframes sq-glow-pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
+    50%       { box-shadow: 0 4px 32px rgba(124,58,237,0.9), 0 0 0 6px rgba(124,58,237,0.15); }
+  }
+  /* ── Micro interaction: subtle breathe (continuous, low-key) ── */
+  @keyframes sq-breathe {
+    0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
+    50%       { box-shadow: 0 4px 26px rgba(124,58,237,0.65); }
+  }
+  #sq-pill.sq-anim-pop    { animation: sq-pop-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+  #sq-pill.sq-anim-glow   { animation: sq-glow-pulse 0.7s ease-in-out 2; }
+  #sq-pill.sq-anim-breathe { animation: sq-breathe 2.8s ease-in-out infinite; }
   #sq-pill-main {
     display: flex; align-items: center; gap: 7px;
     background: none; border: none; color: #fff;
@@ -341,6 +362,17 @@ const HTML = `
             <input type="checkbox" id="sq-auto-open" />
             <span class="sq-toggle-slider"></span>
           </label>
+        </div>
+        <div class="sq-settings-row">
+          <div>
+            <div class="sq-settings-label">Pill animation</div>
+            <div class="sq-settings-desc">Visual effect when the pill appears</div>
+          </div>
+          <select id="sq-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
+            <option value="pop">Spring pop</option>
+            <option value="breathe">Breathe</option>
+            <option value="none">None</option>
+          </select>
         </div>
       </div>
       <div class="sq-body" id="sq-main-body">
@@ -712,6 +744,29 @@ function handleImageDrop(imgEl) {
   fetchPrices();
 }
 
+// ─── Animations ──────────────────────────────────────────────────────────────
+function applyPillAnimation(style) {
+  const pill = $("sq-pill");
+  if (!pill) return;
+  pill.classList.remove("sq-anim-pop", "sq-anim-glow", "sq-anim-breathe");
+  if (style === "none") return;
+
+  if (style === "breathe") {
+    pill.classList.add("sq-anim-breathe");
+    return;
+  }
+
+  // "pop" — spring entrance, then glow pulse once finished
+  pill.classList.add("sq-anim-pop");
+  pill.addEventListener("animationend", () => {
+    pill.classList.remove("sq-anim-pop");
+    pill.classList.add("sq-anim-glow");
+    pill.addEventListener("animationend", () => {
+      pill.classList.remove("sq-anim-glow");
+    }, { once: true });
+  }, { once: true });
+}
+
 // ─── Inject panel ─────────────────────────────────────────────────────────────
 function inject(info) {
   const existing = document.getElementById("__scoutiq__");
@@ -754,11 +809,19 @@ function inject(info) {
 
 
   // Auto-show toggle
-  chrome.storage.local.get(["sq_auto_open"], (d) => {
+  chrome.storage.local.get(["sq_auto_open", "sq_animation"], (d) => {
     $("sq-auto-open").checked = d.sq_auto_open !== false;
+    const anim = d.sq_animation ?? "pop";
+    $("sq-anim-select").value = anim;
+    applyPillAnimation(anim);
   });
   $("sq-auto-open").addEventListener("change", (e) => {
     chrome.storage.local.set({ sq_auto_open: e.target.checked });
+  });
+  $("sq-anim-select").addEventListener("change", (e) => {
+    const anim = e.target.value;
+    chrome.storage.local.set({ sq_animation: anim });
+    applyPillAnimation(anim);
   });
 
   const sqWrap = $("sq-wrap");
@@ -767,6 +830,11 @@ function inject(info) {
 
   // Restore saved position so pill appears in same spot across tabs
   loadStoredPos().then(pos => applyPos(sqWrap, pos));
+
+  // Play entrance animation based on user preference
+  chrome.storage.local.get(["sq_animation"], (d) => {
+    applyPillAnimation(d.sq_animation ?? "pop");
+  });
 
   if (info) renderProduct(info);
   injected = true;
