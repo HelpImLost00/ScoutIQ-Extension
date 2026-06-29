@@ -650,7 +650,7 @@ function makeDraggable(handle, wrap, onDrop) {
       // Highlight product image under cursor as a drop hint
       if (onDrop) {
         const under = document.elementsFromPoint(ev.clientX, ev.clientY);
-        const imgEl = under.find(el => el.tagName === "IMG" && !el.closest("#__scoutiq__") && el.naturalWidth > 60);
+        const imgEl = under.find(el => el.tagName === "IMG" && !el.closest("#__scoutiq__") && (el.naturalWidth > 30 || el.width > 30));
         if (imgEl !== hlImg) {
           if (hlImg) { hlImg.style.outline = ""; hlImg.style.borderRadius = ""; }
           hlImg = imgEl || null;
@@ -793,7 +793,6 @@ async function boot() {
   productInfo = stored;
   compareResults = [];
   inject(stored);
-  setTimeout(openPanel, 100);
 }
 
 function _applyPillOn(stored) {
@@ -845,7 +844,9 @@ navObserver.observe(document.body || document.documentElement, {
 window.__sq_toggle = async (on) => {
   if (on) {
     session = await loadSession();
-    const stored = await loadStoredProduct();
+    const detected = buildProductInfo();
+    const stored = detected || await loadStoredProduct();
+    if (detected) saveStoredProduct(detected);
     _applyPillOn(stored);
   } else {
     _applyPillOff();
