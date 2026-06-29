@@ -1,10 +1,6 @@
-// Marker: file parsed (set before IIFE so even total failure is visible)
-window.__sq_parsed = true;
 // Plain IIFE — const declarations are function-scoped so re-injection is safe.
 // window.__sq_nav_observer is disconnected before re-registering.
-(() => {
-window.__sq_iife_ran = true;
-try {
+(() => { try {
 console.log("[ScoutIQ] content.js initializing");
 
 const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
@@ -718,14 +714,11 @@ function handleImageDrop(imgEl) {
 
 // ─── Inject panel ─────────────────────────────────────────────────────────────
 function inject(info) {
-  window.__sq_inject_step = "start";
   const existing = document.getElementById("__scoutiq__");
   if (existing) existing.remove();
-  window.__sq_inject_step = "creating-host";
   const host = document.createElement("div");
   host.id = "__scoutiq__";
   document.body.appendChild(host);
-  window.__sq_inject_step = "shadow";
   shadow = host.attachShadow({ mode: "open" });
 
   const styleEl = document.createElement("style");
@@ -735,7 +728,6 @@ function inject(info) {
   const wrap = document.createElement("div");
   wrap.innerHTML = HTML;
   shadow.appendChild(wrap);
-  window.__sq_inject_step = "listeners";
   $("sq-pill-main").addEventListener("click", openPanel);
   $("sq-gear-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleSettings(); });
   $("sq-close").addEventListener("click", closePanel);
@@ -762,7 +754,7 @@ function inject(info) {
 
   // Auto-open toggle
   chrome.storage.local.get(["sq_auto_open"], (d) => {
-    $("sq-auto-open").checked = !!d.sq_auto_open;
+    $("sq-auto-open").checked = d.sq_auto_open !== false;
   });
   $("sq-auto-open").addEventListener("change", (e) => {
     chrome.storage.local.set({ sq_auto_open: e.target.checked });
@@ -788,41 +780,28 @@ function saveStoredProduct(product) {
 
 // ─── Boot & SPA navigation ────────────────────────────────────────────────────
 async function boot() {
-  if (injected) return; // __sq_toggle already ran, skip
-  const { sq_pill_on, sq_auto_open } = await chrome.storage.local.get(["sq_pill_on", "sq_auto_open"]);
-  console.log("[ScoutIQ] boot() — sq_pill_on:", sq_pill_on);
-  if (!sq_pill_on) return;
+  if (injected) return;
+  const { sq_auto_open } = await chrome.storage.local.get(["sq_auto_open"]);
+  const autoOpen = sq_auto_open !== false; // default true
+  if (!autoOpen || !isProductPage()) return;
 
-  let stored = await loadStoredProduct();
-
-  // Auto-open: detect product from page and open panel immediately
-  if (sq_auto_open && isProductPage()) {
-    const detected = buildProductInfo();
-    if (detected) {
-      stored = detected;
-      saveStoredProduct(detected);
-    }
-  }
+  session = await loadSession();
+  const detected = buildProductInfo();
+  const stored = detected || await loadStoredProduct();
+  if (detected) saveStoredProduct(detected);
 
   productInfo = stored;
   compareResults = [];
-  session = await loadSession();
   inject(stored);
-
-  if (sq_auto_open && isProductPage() && stored) {
-    setTimeout(openPanel, 100);
-  }
+  setTimeout(openPanel, 100);
 }
 
 function _applyPillOn(stored) {
   productInfo = stored;
   compareResults = [];
-  window.__sq_apply_called = true;
-  window.__sq_inject_error = null;
   try {
     inject(stored);
   } catch(e) {
-    window.__sq_inject_error = e.message;
     console.error("[ScoutIQ] inject() threw:", e);
   }
 }
@@ -847,16 +826,13 @@ let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
-    setTimeout(async () => {
-      const { sq_pill_on } = await chrome.storage.local.get("sq_pill_on");
-      if (!sq_pill_on) return;
-      if (document.getElementById("__scoutiq__")) return; // still alive, leave it
-      injected = false;
-      const stored = await loadStoredProduct();
-      productInfo = stored;
-      compareResults = [];
-      inject(stored);
-    }, 800);
+    // Clean up current pill on navigation, then re-run boot
+    const existing = document.getElementById("__scoutiq__");
+    if (existing) existing.remove();
+    shadow = null;
+    injected = false;
+    compareResults = [];
+    setTimeout(boot, 800);
   }
 });
 window.__sq_nav_observer = navObserver;
