@@ -758,6 +758,7 @@ function inject(info) {
   });
   $("sq-auto-open").addEventListener("change", (e) => {
     chrome.storage.local.set({ sq_auto_open: e.target.checked });
+    if (!e.target.checked) _applyPillOff();
   });
 
   const sqWrap = $("sq-wrap");
@@ -853,11 +854,15 @@ window.__sq_toggle = async (on) => {
   }
 };
 
-// Initial load — skip if __sq_toggle already fired first (prevents double-inject)
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 800));
-} else {
-  setTimeout(boot, 800);
+// Only run boot() on the real first page load — not when background.js re-injects
+// to call __sq_toggle. Re-injections skip boot so hiding the pill sticks.
+const isFirstLoad = !window.__sq_toggle;
+if (isFirstLoad) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 800));
+  } else {
+    setTimeout(boot, 800);
+  }
 }
 
 } catch(e) {
