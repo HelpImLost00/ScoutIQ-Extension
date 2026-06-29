@@ -793,158 +793,320 @@ function playChompElaborate(imgEl, onReady) {
   const startCX = pillRect ? pillRect.left + pillRect.width / 2 : imgCX;
   const startCY = pillRect ? pillRect.top + pillRect.height / 2 : imgRect.top - 70;
   const startW  = pillRect ? pillRect.width  : 150;
-  const startHH = Math.max(14, pillRect ? pillRect.height / 2 : 22);
+  const startHH = Math.max(16, pillRect ? pillRect.height / 2 : 22);
 
-  // Big mouth sized to swallow the image
-  const bigW  = Math.min(Math.max(imgRect.width * 1.12, 200), window.innerWidth * 0.82);
-  const bigHH = Math.max(bigW * 0.23, 44);
+  const bigW  = Math.min(Math.max(imgRect.width * 1.1, 220), window.innerWidth * 0.85);
+  const bigHH = Math.max(bigW * 0.25, 52);
+  const openSmall = startHH * 1.05;
+  const openBig   = bigHH * 0.92;
 
   const stage = document.createElement("div");
   stage.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:2147483646;`;
   document.body.appendChild(stage);
-
-  // Hide the actual pill for the duration so jaws replace it visually
   if (wrapEl) wrapEl.style.visibility = "hidden";
 
-  function makeTeeth(n, isTop, h) {
-    const row = document.createElement("div");
-    row.style.cssText = `display:flex;width:100%;height:${h}px;flex-shrink:0;`;
-    for (let i = 0; i < n; i++) {
-      const t = document.createElement("div");
-      t.style.cssText = `flex:1;height:100%;background:#fff;
-        clip-path:${isTop ? "polygon(8% 0%,92% 0%,50% 100%)" : "polygon(50% 0%,92% 100%,8% 100%)"};
-        filter:drop-shadow(0 1px 2px rgba(0,0,0,0.25));`;
-      row.appendChild(t);
-    }
-    return row;
-  }
-
-  // Build a jaw half. isTop=true → top half (bottom edge has teeth), sits above cy.
+  // ── SVG jaw builder ─────────────────────────────────────────────────────
+  // viewBox 0 0 100 40 normalized; stretches with div (preserveAspectRatio=none)
+  // Teeth drawn with Bezier curves for organic rounded tips + white enamel
   function makeJaw(isTop, cx, cy, w, hh, nTeeth) {
+    const vw = 100, vh = 40;
+    const tw = vw / nTeeth;
+    const gumY = isTop ? 15 : 25; // where teeth meet the gum line
+
+    // Bezier tooth path — curves from gum to rounded tip and back
+    let d;
+    if (isTop) {
+      d = `M 0 0 L ${vw} 0 L ${vw} ${gumY}`;
+      for (let i = nTeeth - 1; i >= 0; i--) {
+        const x0 = tw * (i + 1), xm = tw * (i + 0.5), x1 = tw * i;
+        d += ` L ${x0 - tw*0.06} ${gumY}`;
+        d += ` C ${x0-tw*0.18} ${vh*0.65} ${xm+tw*0.06} ${vh} ${xm} ${vh}`;
+        d += ` C ${xm-tw*0.06} ${vh} ${x1+tw*0.18} ${vh*0.65} ${x1+tw*0.06} ${gumY}`;
+      }
+      d += ` L 0 ${gumY} Z`;
+    } else {
+      d = `M 0 ${vh} L ${vw} ${vh} L ${vw} ${gumY}`;
+      for (let i = nTeeth - 1; i >= 0; i--) {
+        const x0 = tw * (i + 1), xm = tw * (i + 0.5), x1 = tw * i;
+        d += ` L ${x0 - tw*0.06} ${gumY}`;
+        d += ` C ${x0-tw*0.18} ${vh*0.35} ${xm+tw*0.06} 0 ${xm} 0`;
+        d += ` C ${xm-tw*0.06} 0 ${x1+tw*0.18} ${vh*0.35} ${x1+tw*0.06} ${gumY}`;
+      }
+      d += ` L 0 ${gumY} Z`;
+    }
+
+    // White enamel ellipse on each tooth tip
+    let enamel = '';
+    for (let i = 0; i < nTeeth; i++) {
+      const xm = tw * (i + 0.5);
+      const ey = isTop ? vh - 2.5 : 2.5;
+      enamel += `<ellipse cx="${xm}" cy="${ey}" rx="${tw*0.21}" ry="3.2"
+        fill="rgba(255,255,255,0.9)"/>`;
+    }
+
+    // Gum shading (darker ridge where teeth meet jaw)
+    const gumLine = isTop
+      ? `<rect x="0" y="${gumY-2}" width="${vw}" height="3" fill="rgba(90,20,160,0.55)" rx="1.5"/>`
+      : `<rect x="0" y="${gumY-1}" width="${vw}" height="3" fill="rgba(90,20,160,0.55)" rx="1.5"/>`;
+
+    const uid = `sq-j-${Math.random().toString(36).slice(2,7)}`;
     const el = document.createElement("div");
-    const toothH = Math.max(8, hh * 0.52);
     el.style.cssText = `
       position:fixed;
-      left:${cx - w / 2}px;
-      top:${isTop ? cy - hh : cy}px;
+      left:${cx - w/2}px; top:${isTop ? cy - hh : cy}px;
       width:${w}px; height:${hh}px;
-      background:linear-gradient(${isTop ? "180deg" : "0deg"},#6d28d9,#7c3aed);
-      border-radius:${isTop ? "999px 999px 0 0" : "0 0 999px 999px"};
-      display:flex; flex-direction:column;
-      justify-content:${isTop ? "flex-end" : "flex-start"};
-      box-shadow:${isTop
-        ? "0 -4px 20px rgba(124,58,237,0.5), inset 0 4px 10px rgba(255,255,255,0.1)"
-        : "0 4px 20px rgba(124,58,237,0.5), inset 0 -4px 10px rgba(255,255,255,0.1)"};
+      pointer-events:none;
     `;
-    el.appendChild(makeTeeth(nTeeth, isTop, toothH));
+    el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg"
+      width="100%" height="100%"
+      viewBox="0 0 ${vw} ${vh}"
+      preserveAspectRatio="none"
+      style="display:block;overflow:visible;">
+      <defs>
+        <linearGradient id="${uid}g" x1="0" y1="${isTop?0:1}" x2="0" y2="${isTop?1:0}">
+          <stop offset="0%"   stop-color="#3b0764"/>
+          <stop offset="40%"  stop-color="#6d28d9"/>
+          <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        <filter id="${uid}s">
+          <feDropShadow dx="0" dy="${isTop?3:-3}" stdDeviation="4"
+            flood-color="#2e1065" flood-opacity="0.7"/>
+        </filter>
+        <filter id="${uid}gl" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="1.2" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- jaw body with gradient -->
+      <path d="${d}" fill="url(#${uid}g)" filter="url(#${uid}s)"/>
+      <!-- edge highlight -->
+      <path d="${d}" fill="none" stroke="rgba(167,139,250,0.5)" stroke-width="0.7"/>
+      <!-- gum line -->
+      ${gumLine}
+      <!-- enamel on each tip (glow filter) -->
+      <g filter="url(#${uid}gl)">${enamel}</g>
+    </svg>`;
     stage.appendChild(el);
     return el;
   }
 
-  const nSmall = Math.max(3, Math.floor(startW / 15));
-  const nBig   = Math.max(5, Math.floor(bigW / 24));
+  // ── Throat: dark void visible between open jaws ──────────────────────────
+  function makeThroat(cx, cy, w, openGap) {
+    const el = document.createElement("div");
+    el.style.cssText = `position:fixed;
+      left:${cx - w/2}px; top:${cy - openGap}px;
+      width:${w}px; height:${openGap * 2}px;
+      background:radial-gradient(ellipse at 50% 50%,
+        rgba(15,0,40,0.97) 0%,rgba(30,5,70,0.88) 55%,transparent 100%);
+      pointer-events:none;`;
+    stage.appendChild(el);
+    return el;
+  }
 
-  // Start closed: both jaws meet at the pill's center Y
-  const topJ = makeJaw(true,  startCX, startCY, startW, startHH, nSmall);
-  const botJ = makeJaw(false, startCX, startCY, startW, startHH, nSmall);
+  // ── Shadow overlay creeps over image as jaws approach ────────────────────
+  const imgOverlay = document.createElement("div");
+  imgOverlay.style.cssText = `position:fixed;
+    left:${imgRect.left}px; top:${imgRect.top}px;
+    width:${imgRect.width}px; height:${imgRect.height}px;
+    background:rgba(20,0,50,0); pointer-events:none;
+    border-radius:6px; z-index:2147483644;
+    transition:background 0.38s ease;`;
+  document.body.appendChild(imgOverlay);
+
+  // ── Build initial jaws at pill position ───────────────────────────────────
+  const nSmall = Math.max(3, Math.floor(startW / 16));
+  const topJ   = makeJaw(true,  startCX, startCY, startW, startHH, nSmall);
+  const botJ   = makeJaw(false, startCX, startCY, startW, startHH, nSmall);
+  let throat   = null;
+
+  // Save image's original style props so we can cleanly restore them
+  const imgSavedTrans  = imgEl.style.transition;
+  const imgSavedTransf = imgEl.style.transform;
+  const imgSavedFilter = imgEl.style.filter;
 
   function tr(el, dur, ease, styles) {
     el.style.transition = `all ${dur}ms ${ease}`;
     requestAnimationFrame(() => requestAnimationFrame(() => Object.assign(el.style, styles)));
   }
 
-  // Phase 1 — crack open at pill size, showing teeth
-  const openSmall = startHH * 0.95;
+  // ── Phase 1: Pill cracks open, teeth show ────────────────────────────────
   setTimeout(() => {
-    tr(topJ, 260, "cubic-bezier(0.34,1.56,0.64,1)", {
+    tr(topJ, 290, "cubic-bezier(0.34,1.56,0.64,1)", {
       top: `${startCY - startHH - openSmall}px`
     });
-    tr(botJ, 260, "cubic-bezier(0.34,1.56,0.64,1)", {
+    tr(botJ, 290, "cubic-bezier(0.34,1.56,0.64,1)", {
       top: `${startCY + openSmall}px`
     });
-  }, 20);
+    // Throat void appears as gap opens
+    setTimeout(() => {
+      throat = makeThroat(startCX, startCY, startW, openSmall * 0.9);
+    }, 200);
+  }, 25);
 
-  // Phase 2 — launch at image and inflate to match its width
-  const openBig = bigHH * 0.85;
+  // ── Phase 2: Launch at image, grow to swallow width, shadow falls ─────────
   setTimeout(() => {
-    tr(topJ, 400, "cubic-bezier(0.4,0,0.2,1)", {
-      left: `${imgCX - bigW / 2}px`,
+    imgOverlay.style.background = "rgba(20,0,50,0.42)";
+
+    tr(topJ, 420, "cubic-bezier(0.4,0,0.2,1)", {
+      left: `${imgCX - bigW/2}px`,
       top:  `${imgCY - bigHH - openBig}px`,
       width: `${bigW}px`, height: `${bigHH}px`,
-      borderRadius: "999px 999px 0 0",
     });
-    tr(botJ, 400, "cubic-bezier(0.4,0,0.2,1)", {
-      left: `${imgCX - bigW / 2}px`,
+    tr(botJ, 420, "cubic-bezier(0.4,0,0.2,1)", {
+      left: `${imgCX - bigW/2}px`,
       top:  `${imgCY + openBig}px`,
       width: `${bigW}px`, height: `${bigHH}px`,
-      borderRadius: "0 0 999px 999px",
     });
-  }, 360);
+    if (throat) {
+      tr(throat, 420, "cubic-bezier(0.4,0,0.2,1)", {
+        left: `${imgCX - bigW/2}px`,
+        top:  `${imgCY - openBig}px`,
+        width: `${bigW}px`, height: `${openBig * 2}px`,
+      });
+    }
+  }, 390);
 
-  // Phase 3 — SNAP SHUT over the image
+  // ── Phase 3: SNAP SHUT ────────────────────────────────────────────────────
   setTimeout(() => {
-    tr(topJ, 110, "cubic-bezier(0.25,0,0.5,1)", { top: `${imgCY - bigHH}px` });
-    tr(botJ, 110, "cubic-bezier(0.25,0,0.5,1)", { top: `${imgCY}px` });
+    tr(topJ, 105, "cubic-bezier(0.22,0,0.5,1)", { top: `${imgCY - bigHH}px` });
+    tr(botJ, 105, "cubic-bezier(0.22,0,0.5,1)", { top: `${imgCY}px` });
+    if (throat) { tr(throat, 80, "ease-in", { opacity:"0", height:"0", top:`${imgCY}px` }); }
 
-    // Bright flash as jaws close
+    // ── White flash ───────────────────────────────────────────────────────
     const flash = document.createElement("div");
-    flash.style.cssText = `position:fixed;
-      left:${imgRect.left}px; top:${imgRect.top}px;
-      width:${imgRect.width}px; height:${imgRect.height}px;
-      background:#fff; opacity:0.9; pointer-events:none; z-index:2147483645;`;
+    flash.style.cssText = `position:fixed;inset:0;background:#fff;opacity:0.65;
+      pointer-events:none;z-index:2147483643;`;
     stage.appendChild(flash);
-    setTimeout(() => { flash.style.transition = "opacity 0.28s"; flash.style.opacity = "0"; }, 60);
-    setTimeout(() => flash.remove(), 370);
+    setTimeout(() => { flash.style.transition="opacity 0.3s"; flash.style.opacity="0"; }, 55);
+    setTimeout(() => flash.remove(), 380);
 
-    // Signal to open the panel right as the jaws bite
+    // ── Screen shake ──────────────────────────────────────────────────────
+    const shakeStyle = document.createElement("style");
+    shakeStyle.textContent = `@keyframes sq-chomp-shake {
+      0%,100%{transform:translate(0,0)rotate(0)}
+      14%{transform:translate(-8px,5px)rotate(-0.5deg)}
+      28%{transform:translate(7px,-7px)rotate(0.4deg)}
+      42%{transform:translate(-5px,5px)rotate(-0.3deg)}
+      57%{transform:translate(5px,-3px)rotate(0.2deg)}
+      71%{transform:translate(-3px,2px)rotate(-0.1deg)}
+      85%{transform:translate(2px,-1px)}
+    }`;
+    document.head.appendChild(shakeStyle);
+    stage.style.animation = "sq-chomp-shake 0.48s cubic-bezier(0.36,0.07,0.19,0.97)";
+    setTimeout(() => { stage.style.animation=""; shakeStyle.remove(); }, 520);
+
+    // ── Image consumed ────────────────────────────────────────────────────
+    imgOverlay.style.transition = "background 0.12s ease";
+    imgOverlay.style.background = "rgba(88,28,135,0.78)";
+    imgEl.style.transition = "transform 0.18s ease, filter 0.18s ease";
+    imgEl.style.transform  = "scale(0.9)";
+    imgEl.style.filter     = "brightness(0.25) saturate(0) blur(1px)";
+
+    // ── Particle burst from bite center ───────────────────────────────────
+    for (let i = 0; i < 24; i++) {
+      const p = document.createElement("div");
+      const sz    = 5 + Math.random() * 12;
+      const angle = (i / 24) * Math.PI * 2 + Math.random() * 0.28;
+      const dist  = 55 + Math.random() * 100;
+      const hue   = 265 + Math.random() * 50;
+      const lit   = 50 + Math.random() * 25;
+      const col   = `hsl(${hue},85%,${lit}%)`;
+      p.style.cssText = `position:fixed;
+        left:${imgCX - sz/2}px; top:${imgCY - sz/2}px;
+        width:${sz}px; height:${sz}px; border-radius:50%;
+        background:${col}; pointer-events:none; z-index:2147483645;
+        box-shadow:0 0 ${sz*1.2}px ${col};`;
+      stage.appendChild(p);
+      const delay = Math.random() * 60;
+      setTimeout(() => {
+        p.style.transition = `all ${0.38+Math.random()*0.35}s cubic-bezier(0,0,0.3,1)`;
+        p.style.transform  = `translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`;
+        p.style.opacity    = "0";
+      }, delay);
+      setTimeout(() => p.remove(), 900);
+    }
+
+    // Signal panel to open at the moment of the bite
     onReady();
-  }, 820);
+  }, 860);
 
-  // Phase 4 — bite mark appears, jaws launch off-screen
+  // ── Phase 4: Bite mark + image recovers + jaws exit ──────────────────────
   setTimeout(() => {
     addBiteMarkSVG(imgRect);
-    tr(topJ, 340, "cubic-bezier(0.4,0,1,1)", {
+
+    // Image springs back
+    imgOverlay.style.transition = "background 0.55s ease";
+    imgOverlay.style.background = "rgba(20,0,50,0)";
+    imgEl.style.transition = `transform 0.55s cubic-bezier(0.34,1.3,0.64,1), filter 0.45s ease`;
+    imgEl.style.transform  = imgSavedTransf || "";
+    imgEl.style.filter     = imgSavedFilter || "";
+
+    tr(topJ, 350, "cubic-bezier(0.4,0,1,1)", {
       top: `${-bigHH * 3}px`, opacity: "0",
     });
-    tr(botJ, 340, "cubic-bezier(0.4,0,1,1)", {
+    tr(botJ, 350, "cubic-bezier(0.4,0,1,1)", {
       top: `${window.innerHeight + bigHH * 2}px`, opacity: "0",
     });
+
     setTimeout(() => {
+      imgEl.style.transition = imgSavedTrans;
       if (wrapEl) wrapEl.style.visibility = "visible";
+      imgOverlay.remove();
       stage.remove();
-    }, 380);
-  }, 1030);
+    }, 420);
+  }, 1090);
 }
 
 function addBiteMarkSVG(rect) {
-  const w = rect.width, h = rect.height;
-  const barH = Math.min(h * 0.3, 55);
-  const n = Math.max(2, Math.floor(w / 50));
-  const r = (w / n) / 2.7;
+  const w = rect.width;
+  // Bite mark sits at the horizontal center of the image (where jaws snapped)
+  const biteY = rect.top + rect.height * 0.5;
 
-  // Rectangle with upward semicircle bites along the bottom edge
-  // CW path so interior fills: top-left → top-right → bottom-right → bites left → bottom-left
-  let d = `M 0 0 L ${w} 0 L ${w} ${barH}`;
-  for (let i = n - 1; i >= 0; i--) {
-    const cx = (w / n) * (i + 0.5);
-    d += ` L ${cx + r} ${barH} A ${r} ${r} 0 0 1 ${cx - r} ${barH}`;
+  const n  = Math.max(4, Math.floor(w / 38)); // upper tooth count
+  const tw = w / n;                            // tooth spacing
+  const r  = tw * 0.33;                        // upper tooth radius
+  const r2 = r * 0.78;                         // lower tooth radius (slightly smaller)
+  const gap = r * 0.6;                         // gap between upper & lower rows
+
+  // Upper row: n circles aligned to tooth positions
+  // Lower row: n circles offset by half tooth width (interdigitates)
+  let upper = '', lower = '';
+  for (let i = 0; i < n; i++) {
+    const cx = tw * (i + 0.5);
+    upper += `<circle cx="${cx}" cy="${r}" r="${r}" fill="rgba(76,29,149,0.7)"/>`;
+    // Enamel sheen on upper teeth
+    upper += `<ellipse cx="${cx}" cy="${r*0.45}" rx="${r*0.42}" ry="${r*0.28}" fill="rgba(255,255,255,0.18)"/>`;
   }
-  d += ` L 0 ${barH} Z`;
+  for (let i = 0; i < n + 1; i++) {
+    const cx = tw * i;
+    if (cx - r2 > -r && cx + r2 < w + r) {
+      lower += `<circle cx="${cx}" cy="${r*2 + gap + r2}" r="${r2}" fill="rgba(76,29,149,0.55)"/>`;
+      lower += `<ellipse cx="${cx}" cy="${r*2+gap+r2*0.45}" rx="${r2*0.42}" ry="${r2*0.28}" fill="rgba(255,255,255,0.14)"/>`;
+    }
+  }
 
+  const totalH = r * 2 + gap + r2 * 2 + 6;
+  const uid = `sq-bm-${Math.random().toString(36).slice(2,7)}`;
   const el = document.createElement("div");
-  el.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
-    pointer-events:none;z-index:2147483645;`;
-  el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${barH}">
-    <defs>
-      <filter id="sq-bite-blur"><feGaussianBlur stdDeviation="1.5"/></filter>
-    </defs>
-    <path d="${d}" fill="rgba(124,58,237,0.55)" filter="url(#sq-bite-blur)"/>
-    <path d="${d}" fill="rgba(124,58,237,0.3)"/>
-  </svg>`;
-  document.body.appendChild(el);
+  el.style.cssText = `position:fixed;
+    left:${rect.left}px; top:${biteY - r}px;
+    width:${w}px; height:${totalH}px;
+    pointer-events:none; z-index:2147483645;`;
 
-  setTimeout(() => { el.style.transition = "opacity 1.1s ease"; el.style.opacity = "0"; }, 700);
-  setTimeout(() => el.remove(), 1900);
+  el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${totalH}">
+    <defs>
+      <filter id="${uid}f" x="-15%" y="-15%" width="130%" height="130%">
+        <feGaussianBlur stdDeviation="2.8" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <g filter="url(#${uid}f)">${upper}${lower}</g>
+  </svg>`;
+
+  document.body.appendChild(el);
+  // Hold visible for a beat, then fade
+  setTimeout(() => { el.style.transition = "opacity 1.2s ease"; el.style.opacity = "0"; }, 800);
+  setTimeout(() => el.remove(), 2200);
 }
 
 function playImageReadAnim(imgEl, onReady = () => {}) {
