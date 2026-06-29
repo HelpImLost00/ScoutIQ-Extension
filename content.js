@@ -381,6 +381,7 @@ const HTML = `
             <div class="sq-settings-desc">Effect on the image while extracting details</div>
           </div>
           <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
+            <option value="chomp">Chomp 👾</option>
             <option value="focus">Focus brackets</option>
             <option value="scanline">Scan line</option>
             <option value="glow">Glow border</option>
@@ -396,6 +397,7 @@ const HTML = `
             <option value="dots">Pac-Man dots</option>
             <option value="sparkle">Sparkles</option>
             <option value="comet">Comet tail</option>
+            <option value="burst">Burst</option>
             <option value="none">None</option>
           </select>
         </div>
@@ -787,7 +789,49 @@ function playImageReadAnim(imgEl) {
     pointer-events:none;z-index:2147483646;overflow:hidden;border-radius:6px;`;
   document.body.appendChild(wrap);
 
-  if (_readImgStyle === "focus") {
+  if (_readImgStyle === "chomp") {
+    // Row of teeth chomps down from the top of the image — the signature animation
+    const numTeeth = Math.max(4, Math.floor(rect.width / 22));
+    const tw = rect.width / numTeeth;
+    const th = Math.min(32, tw * 1.1);
+
+    // Upper jaw — purple bar with white downward teeth
+    const jaw = document.createElement("div");
+    jaw.style.cssText = `position:absolute;left:0;right:0;top:0;height:${th}px;
+      background:#7c3aed;display:flex;align-items:flex-end;
+      transform:translateY(-100%);z-index:2;
+      transition:transform 0.18s cubic-bezier(0.25,0,0.5,1.5);`;
+    for (let i = 0; i < numTeeth; i++) {
+      const tooth = document.createElement("div");
+      tooth.style.cssText = `flex:1;height:${th * 0.65}px;background:#fff;
+        clip-path:polygon(8% 0%,92% 0%,50% 100%);`;
+      jaw.appendChild(tooth);
+    }
+    wrap.appendChild(jaw);
+
+    // Overlay that fills in as the image is "eaten"
+    const bite = document.createElement("div");
+    bite.style.cssText = `position:absolute;left:0;right:0;top:0;height:0;
+      background:rgba(124,58,237,0.25);transition:height 0.6s ease;z-index:1;`;
+    wrap.appendChild(bite);
+
+    // Animate: chomp down twice
+    const doChomp = (retract) => new Promise(res => {
+      jaw.style.transform = retract ? "translateY(-100%)" : "translateY(0)";
+      setTimeout(res, 200);
+    });
+
+    (async () => {
+      await doChomp(false);         // bite down
+      bite.style.height = "35%";
+      await doChomp(true);          // retract
+      await new Promise(r => setTimeout(r, 80));
+      await doChomp(false);         // second bite
+      bite.style.height = "65%";
+      await doChomp(true);          // retract
+    })();
+
+  } else if (_readImgStyle === "focus") {
     const s = Math.min(28, rect.width * 0.28, rect.height * 0.28);
     const b = 3;
     const corners = [
@@ -839,48 +883,89 @@ function playImageReadAnim(imgEl) {
 // ─── Movement trail ───────────────────────────────────────────────────────────
 let _lastTrailTime = 0;
 function emitTrail(x, y) {
+  if (_trailStyle === "none") return;
   const now = Date.now();
-  const interval = _trailStyle === "comet" ? 30 : 70;
+  const interval = _trailStyle === "comet" ? 20 : _trailStyle === "burst" ? 45 : 35;
   if (now - _lastTrailTime < interval) return;
   _lastTrailTime = now;
-  if (_trailStyle === "none") return;
-
-  const el = document.createElement("div");
-  document.body.appendChild(el);
 
   if (_trailStyle === "dots") {
-    const size = 8 + Math.random() * 4;
-    el.style.cssText = `position:fixed;left:${x - size/2}px;top:${y - size/2}px;
+    // Bold Pac-Man style dots — large, immediate fade
+    const size = 14 + Math.random() * 8;
+    const el = document.createElement("div");
+    el.style.cssText = `position:fixed;left:${x-size/2}px;top:${y-size/2}px;
       width:${size}px;height:${size}px;border-radius:50%;
-      background:#7c3aed;opacity:0.75;pointer-events:none;z-index:2147483645;
-      transition:opacity 0.55s ease,transform 0.55s ease;`;
-    requestAnimationFrame(() => { el.style.opacity="0"; el.style.transform="scale(0)"; });
-    setTimeout(() => el.remove(), 600);
+      background:#7c3aed;opacity:1;pointer-events:none;z-index:2147483645;
+      box-shadow:0 0 8px rgba(124,58,237,0.7);`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+      el.style.opacity = "0"; el.style.transform = "scale(0.1)";
+    }));
+    setTimeout(() => el.remove(), 450);
 
   } else if (_trailStyle === "sparkle") {
-    const chars = ["✦","✧","⬡","◆","✺"];
-    el.textContent = chars[Math.floor(Math.random() * chars.length)];
-    const size = 10 + Math.random() * 8;
-    const dx = (Math.random() - 0.5) * 20;
-    const dy = -(Math.random() * 16 + 8);
-    el.style.cssText = `position:fixed;left:${x - size/2}px;top:${y - size/2}px;
-      font-size:${size}px;color:#a855f7;opacity:0.9;pointer-events:none;
-      z-index:2147483645;transition:opacity 0.6s ease,transform 0.6s ease;`;
-    requestAnimationFrame(() => {
-      el.style.opacity="0";
-      el.style.transform=`translate(${dx}px,${dy}px) scale(0)`;
-    });
-    setTimeout(() => el.remove(), 650);
+    // High-energy sparkles that shoot outward
+    const chars = ["✦","✧","★","◆","⬟","✺"];
+    for (let i = 0; i < 2; i++) {
+      const el = document.createElement("div");
+      el.textContent = chars[Math.floor(Math.random() * chars.length)];
+      const size = 14 + Math.random() * 10;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 20 + Math.random() * 30;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      el.style.cssText = `position:fixed;left:${x-size/2}px;top:${y-size/2}px;
+        font-size:${size}px;color:#c4b5fd;opacity:1;pointer-events:none;
+        z-index:2147483645;text-shadow:0 0 6px #7c3aed;`;
+      document.body.appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+        el.style.opacity = "0";
+        el.style.transform = `translate(${dx}px,${dy}px) scale(0) rotate(${Math.random()*180}deg)`;
+      }));
+      setTimeout(() => el.remove(), 550);
+    }
 
   } else if (_trailStyle === "comet") {
-    const size = 5 + Math.random() * 3;
-    el.style.cssText = `position:fixed;left:${x - size/2}px;top:${y - size/2}px;
-      width:${size}px;height:${size}px;border-radius:50%;
-      background:radial-gradient(circle, #c4b5fd, #7c3aed);
-      opacity:0.85;pointer-events:none;z-index:2147483645;
-      transition:opacity 0.35s ease,transform 0.35s ease;`;
-    requestAnimationFrame(() => { el.style.opacity="0"; el.style.transform="scale(0.2)"; });
-    setTimeout(() => el.remove(), 400);
+    // Dense fast-fading orbs — classic comet tail
+    for (let i = 0; i < 3; i++) {
+      const size = (8 + Math.random() * 6) * (1 - i * 0.2);
+      const ox = (Math.random()-0.5)*6, oy = (Math.random()-0.5)*6;
+      const el = document.createElement("div");
+      el.style.cssText = `position:fixed;left:${x-size/2+ox}px;top:${y-size/2+oy}px;
+        width:${size}px;height:${size}px;border-radius:50%;
+        background:radial-gradient(circle,#e9d5ff,#7c3aed);
+        opacity:${0.9 - i*0.25};pointer-events:none;z-index:2147483645;`;
+      document.body.appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = `opacity ${0.25 + i*0.05}s ease`;
+        el.style.opacity = "0";
+      }));
+      setTimeout(() => el.remove(), 300);
+    }
+
+  } else if (_trailStyle === "burst") {
+    // Explosive burst of particles at each point — very visible
+    const count = 6;
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement("div");
+      const size = 8 + Math.random() * 8;
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 24 + Math.random() * 20;
+      el.style.cssText = `position:fixed;left:${x-size/2}px;top:${y-size/2}px;
+        width:${size}px;height:${size}px;border-radius:50%;
+        background:hsl(${270+Math.random()*40},80%,${55+Math.random()*25}%);
+        opacity:1;pointer-events:none;z-index:2147483645;
+        box-shadow:0 0 6px rgba(124,58,237,0.5);`;
+      document.body.appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = "opacity 0.45s ease, transform 0.45s ease";
+        el.style.opacity = "0";
+        el.style.transform = `translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`;
+      }));
+      setTimeout(() => el.remove(), 500);
+    }
   }
 }
 
