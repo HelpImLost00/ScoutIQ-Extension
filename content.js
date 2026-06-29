@@ -1,6 +1,10 @@
+// Marker: file parsed (set before IIFE so even total failure is visible)
+window.__sq_parsed = true;
 // Plain IIFE — const declarations are function-scoped so re-injection is safe.
 // window.__sq_nav_observer is disconnected before re-registering.
-(() => { try {
+(() => {
+window.__sq_iife_ran = true;
+try {
 console.log("[ScoutIQ] content.js initializing");
 
 const SCOUTIQ_URL = "https://scoutiq10.lovable.app";

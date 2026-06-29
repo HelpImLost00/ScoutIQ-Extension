@@ -29,29 +29,30 @@ chrome.action.onClicked.addListener(async (tab) => {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: async (on) => {
-        if (!window.__sq_toggle) {
-          // surface missing-toggle as a visible banner
+        const parsed = !!window.__sq_parsed;
+        const iifeRan = !!window.__sq_iife_ran;
+        const hasToggle = typeof window.__sq_toggle === "function";
+        const status = "parsed:" + parsed + " iife:" + iifeRan + " toggle:" + hasToggle;
+        if (!hasToggle) {
           const b = document.createElement("div");
           b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#c00;color:#fff;padding:8px;font:bold 13px sans-serif;text-align:center;";
-          b.textContent = "ScoutIQ: __sq_toggle missing (content.js did not initialize)";
-          document.body.appendChild(b); setTimeout(() => b.remove(), 8000);
+          b.textContent = "ScoutIQ: " + status;
+          document.body.appendChild(b); setTimeout(() => b.remove(), 10000);
           return;
         }
         try { await window.__sq_toggle(on); }
         catch(e) {
           const b = document.createElement("div");
           b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#c00;color:#fff;padding:8px;font:bold 13px sans-serif;text-align:center;";
-          b.textContent = "ScoutIQ toggle error: " + e.message;
-          document.body.appendChild(b); setTimeout(() => b.remove(), 8000);
+          b.textContent = "ScoutIQ toggle threw: " + e.message;
+          document.body.appendChild(b); setTimeout(() => b.remove(), 10000);
           return;
         }
-        // Show DOM state so we know if inject() ran
         const host = document.getElementById("__scoutiq__");
-        const hasShadow = !!(host && host.shadowRoot);
         const b = document.createElement("div");
-        b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:" + (hasShadow ? "#1a7a1a" : "#c00") + ";color:#fff;padding:8px;font:bold 13px sans-serif;text-align:center;";
-        b.textContent = "ScoutIQ debug — host:" + !!host + " shadow:" + hasShadow + " on:" + on;
-        document.body.appendChild(b); setTimeout(() => b.remove(), 8000);
+        b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:" + (host ? "#1a7a1a" : "#c00") + ";color:#fff;padding:8px;font:bold 13px sans-serif;text-align:center;";
+        b.textContent = "ScoutIQ: " + status + " host:" + !!host;
+        document.body.appendChild(b); setTimeout(() => b.remove(), 10000);
       },
       args: [next],
     });
