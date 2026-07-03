@@ -2043,6 +2043,7 @@ function pillOff(saveState = false) {
   shadow = null;
   injected = false;
   if (saveState) chrome.storage.local.set({ sq_pill_active: false });
+  chrome.runtime.sendMessage({ type: "sq_pill_state", active: false }).catch(() => {});
 }
 
 async function pillOn(saveState = false) {
@@ -2050,6 +2051,7 @@ async function pillOn(saveState = false) {
   session = await loadSession();
   inject(null);
   if (saveState) chrome.storage.local.set({ sq_pill_active: true });
+  chrome.runtime.sendMessage({ type: "sq_pill_state", active: true }).catch(() => {});
 }
 
 // Boot: runs once per real page load â€” check both explicit state and auto-detect
@@ -2090,6 +2092,19 @@ window.__sq_toggle = async (on) => {
   if (on) await pillOn(true);
   else pillOff(true);
 };
+
+// Message listener for icon-click toggle from background.js (registered once per page)
+if (!window.__sq_msg_listener) {
+  window.__sq_msg_listener = true;
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === "sq_toggle") {
+      const isOn = !!document.getElementById("__scoutiq__");
+      if (window.__sq_toggle) window.__sq_toggle(!isOn);
+      sendResponse({ ok: true });
+      return true;
+    }
+  });
+}
 
 // Boot: only on real first page load, not on re-injection
 if (!window.__sq_toggle_registered) {
