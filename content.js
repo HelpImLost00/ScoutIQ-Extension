@@ -1,7 +1,7 @@
-// Plain IIFE — const declarations are function-scoped so re-injection is safe.
+﻿// Plain IIFE â€” const declarations are function-scoped so re-injection is safe.
 // window.__sq_nav_observer is disconnected before re-registering.
 (() => { try {
-console.log("[ScoutIQ] content.js initializing");
+console.log("[ScoutIQ] content.js initializing â€” GSAP:", typeof gsap !== "undefined" ? gsap.version : "NOT LOADED");
 
 const SCOUTIQ_URL = "https://scoutiq10.lovable.app";
 const SCRAPER_URL = "https://scoutiq-scraper.onrender.com";
@@ -10,7 +10,7 @@ const SUPABASE_URL = "https://qxsegnzpjbxmunfnvavh.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4c2VnbnpwamJ4bXVuZm52YXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTU0OTcsImV4cCI6MjA5NjI5MTQ5N30.obX93Mxx_pZ3csXAVLW1j4fYT5wC0QM4um-8--nDryA";
 
-// ─── Product detection ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Product detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getMetaContent(property) {
   const el =
     document.querySelector(`meta[property="${property}"]`) ||
@@ -42,8 +42,8 @@ function isProductPage() {
   const search = location.search.toLowerCase();
   const host = location.hostname.replace("www.", "");
 
-  // ── Hard exclusions (listing / search / category pages) ──────────────────
-  // Search query params — almost always a results page
+  // â”€â”€ Hard exclusions (listing / search / category pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Search query params â€” almost always a results page
   if (/[?&](k|q|query|search|keyword|s)=/.test(search)) return false;
   // Common listing path segments
   if (/\/(search|results|browse|category|categories|collection|collections|department|shop\/all|sitesearch|find)/.test(path)) return false;
@@ -61,8 +61,8 @@ function isProductPage() {
   );
   if (productCards.length > 2) return false;
 
-  // ── Positive signals ──────────────────────────────────────────────────────
-  // og:type = product (very reliable — set per-item by every major retailer)
+  // â”€â”€ Positive signals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // og:type = product (very reliable â€” set per-item by every major retailer)
   if ((getMetaContent("og:type") || "").toLowerCase().includes("product")) return true;
 
   // schema.org @type: Product
@@ -131,7 +131,7 @@ function extractName() {
   if (h1?.textContent?.trim().length > 5) return h1.textContent.trim();
 
   // Page title, strip store name suffix
-  return document.title.split(/\s*[\|â€"\-]\s*/)[0].trim();
+  return document.title.split(/\s*[\|Ã¢â‚¬"\-]\s*/)[0].trim();
 }
 
 function extractPrice() {
@@ -178,7 +178,7 @@ function extractPrice() {
   for (const sel of priceSelectors) {
     const el = document.querySelector(sel);
     const txt = el?.getAttribute("content") || el?.getAttribute("data-price") || el?.textContent?.trim();
-    if (txt && /\$|£|€|\d/.test(txt)) return txt.slice(0, 20);
+    if (txt && /\$|Â£|â‚¬|\d/.test(txt)) return txt.slice(0, 20);
   }
   return null;
 }
@@ -201,7 +201,7 @@ function extractImage() {
 function cleanName(name) {
   if (!name) return null;
   return name
-    .replace(/\s*[\|â€"\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
+    .replace(/\s*[\|Ã¢â‚¬"\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
     .replace(/\s*:\s*Amazon\.com.*$/i, "")
     .trim()
     .slice(0, 200);
@@ -219,7 +219,7 @@ function buildProductInfo() {
   };
 }
 
-// ─── Shadow DOM Panel ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Shadow DOM Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CSS = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
   #sq-wrap {
@@ -235,19 +235,19 @@ const CSS = `
   }
   #sq-pill.sq-dragging { cursor: grabbing; }
 
-  /* ── Micro interaction: spring entrance ── */
+  /* â”€â”€ Micro interaction: spring entrance â”€â”€ */
   @keyframes sq-pop-in {
     0%   { transform: scale(0.4); opacity: 0; }
     65%  { transform: scale(1.12); opacity: 1; }
     82%  { transform: scale(0.95); }
     100% { transform: scale(1); }
   }
-  /* ── Micro interaction: attention glow pulse (plays once after entrance) ── */
+  /* â”€â”€ Micro interaction: attention glow pulse (plays once after entrance) â”€â”€ */
   @keyframes sq-glow-pulse {
     0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
     50%       { box-shadow: 0 4px 32px rgba(124,58,237,0.9), 0 0 0 6px rgba(124,58,237,0.15); }
   }
-  /* ── Micro interaction: subtle breathe (continuous, low-key) ── */
+  /* â”€â”€ Micro interaction: subtle breathe (continuous, low-key) â”€â”€ */
   @keyframes sq-breathe {
     0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
     50%       { box-shadow: 0 4px 26px rgba(124,58,237,0.65); }
@@ -295,9 +295,14 @@ const CSS = `
   .sq-spinner { width: 20px; height: 20px; border: 2px solid #2a2a2a; border-top-color: #7c3aed; border-radius: 50%; animation: sq-spin 0.7s linear infinite; margin: 12px auto; }
   @keyframes sq-spin { to { transform: rotate(360deg); } }
   .sq-results { display: flex; flex-direction: column; gap: 3px; }
-  .sq-result { display: flex; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 7px; border: 1px solid #1e1e1e; background: #141414; text-decoration: none; color: inherit; transition: border-color 0.12s, background 0.12s; cursor: pointer; }
-  .sq-result:hover { border-color: #7c3aed44; background: #1a1220; }
-  .sq-result.sq-best { border-color: #059669; background: #052e1a; }
+  .sq-result-wrap { position: relative; display: flex; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 7px; border: 1px solid #1e1e1e; background: #141414; color: inherit; transition: border-color 0.12s, background 0.12s; cursor: pointer; overflow: hidden; }
+  .sq-result-wrap:hover { border-color: #7c3aed44; background: #1a1220; }
+  .sq-result-wrap.sq-best { border-color: #059669; background: #052e1a; }
+  .sq-atc-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,0,24,0.78); opacity: 0; transition: opacity 0.14s; border-radius: 6px; pointer-events: none; }
+  .sq-result-wrap:hover .sq-atc-overlay { opacity: 1; pointer-events: auto; }
+  .sq-atc-btn { background: #7c3aed; color: #fff; border: none; border-radius: 6px; padding: 5px 13px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.12s, transform 0.1s; letter-spacing: 0.01em; }
+  .sq-atc-btn:hover { background: #6d28d9; transform: scale(1.04); }
+  .sq-atc-btn.sq-atc-added { background: #059669; cursor: default; }
   .sq-badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; flex-shrink: 0; }
   .sq-badge-amazon { background: rgba(245,158,11,0.15); color: #f59e0b; }
   .sq-badge-walmart { background: rgba(59,130,246,0.15); color: #60a5fa; }
@@ -308,7 +313,7 @@ const CSS = `
   .sq-badge-other   { background: #1c1c1c; color: #888; }
   .sq-result-name { flex: 1; font-size: 11px; color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sq-result-price { font-size: 13px; font-weight: 700; color: #f0f0f0; flex-shrink: 0; }
-  .sq-best .sq-result-price { color: #34d399; }
+  .sq-result-wrap.sq-best .sq-result-price { color: #34d399; }
   .sq-best-label { font-size: 8px; font-weight: 700; color: #34d399; border: 1px solid rgba(5,40,22,0.4); padding: 1px 4px; border-radius: 3px; flex-shrink: 0; }
   .sq-track-section { margin-top: 9px; padding-top: 9px; border-top: 1px solid #1e1e1e; }
   .sq-btn-track { width: 100%; padding: 8px; border-radius: 7px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; background: #7c3aed; color: #fff; transition: background 0.15s; }
@@ -344,14 +349,14 @@ const CSS = `
 const HTML = `
   <div id="sq-wrap">
     <div id="sq-pill">
-      <button id="sq-pill-main"><span>⚡</span><span>Compare prices</span></button>
+      <button id="sq-pill-main"><span>âš¡</span><span>Compare prices</span></button>
     </div>
     <div id="sq-panel">
       <div class="sq-header" id="sq-header" draggable="false">
-        <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">⚡</div>ScoutIQ</a>
+        <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">âš¡</div>ScoutIQ</a>
         <span class="sq-version">v1.4</span>
-        <button class="sq-gear-btn" id="sq-gear-btn" title="Settings">⚙</button>
-        <button class="sq-close" id="sq-close">✕</button>
+        <button class="sq-gear-btn" id="sq-gear-btn" title="Settings">âš™</button>
+        <button class="sq-close" id="sq-close">âœ•</button>
       </div>
       <div class="sq-settings" id="sq-settings-body" style="display:none">
         <div class="sq-settings-row">
@@ -381,9 +386,9 @@ const HTML = `
             <div class="sq-settings-desc">Effect on the image while extracting details</div>
           </div>
           <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
-            <option value="chomp">Chomp 👾</option>
-            <option value="absorb">Absorb ✨</option>
-            <option value="wand">Wand 🪄</option>
+            <option value="chomp">Chomp ðŸ‘¾</option>
+            <option value="absorb">Absorb âœ¨</option>
+            <option value="wand">Wand ðŸª„</option>
             <option value="focus">Focus brackets</option>
             <option value="scanline">Scan line</option>
             <option value="glow">Glow border</option>
@@ -417,23 +422,23 @@ const HTML = `
         <div class="sq-results" id="sq-results" style="display:none"></div>
         <div class="sq-error" id="sq-error" style="display:none"></div>
         <div class="sq-track-section" id="sq-track-section" style="display:none">
-          <button class="sq-btn-track" id="sq-btn-track">♡ Track this product</button>
+          <button class="sq-btn-track" id="sq-btn-track">🛒 Add to cart</button>
           <div class="sq-hint" id="sq-hint"></div>
         </div>
         <div class="sq-auth" id="sq-auth" style="display:none">
           <div class="sq-auth-title">Sign in to track prices</div>
           <div class="sq-field"><label>Email</label><input type="email" id="sq-email" placeholder="you@email.com" /></div>
-          <div class="sq-field"><label>Password</label><input type="password" id="sq-password" placeholder="••••••••" /></div>
+          <div class="sq-field"><label>Password</label><input type="password" id="sq-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" /></div>
           <div class="sq-auth-error" id="sq-auth-error"></div>
           <button class="sq-btn-login" id="sq-btn-login">Sign in</button>
-          <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free ↗</a></div>
+          <div class="sq-auth-footer">No account? <a href="${SCOUTIQ_URL}/signup" target="_blank">Sign up free â†—</a></div>
         </div>
       </div>
     </div>
   </div>
 `;
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let shadow = null;
 let productInfo = null;
 let compareResults = [];
@@ -442,7 +447,7 @@ let injected = false;
 
 function $(id) { return shadow ? shadow.querySelector("#" + id) : null; }
 
-// ─── Session ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSession() {
   return new Promise((resolve) => {
     chrome.storage.local.get(["sb_session"], async (r) => {
@@ -473,7 +478,7 @@ async function loadSession() {
 }
 function saveSession(s) { chrome.storage.local.set({ sb_session: s }); session = s; }
 
-// ─── Pill enabled state ───────────────────────────────────────────────────────
+// â”€â”€â”€ Pill enabled state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function isPillEnabled() {
   return new Promise(r => chrome.storage.local.get(["sq_pill_on"], d => r(!!d.sq_pill_on)));
 }
@@ -481,7 +486,7 @@ function setPillEnabled(val) {
   return new Promise(r => chrome.storage.local.set({ sq_pill_on: val }, r));
 }
 
-// ─── Panel ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function openSettings() {
   $("sq-settings-body").style.display = "block";
   $("sq-gear-btn").classList.add("sq-active");
@@ -499,7 +504,7 @@ function openPanel() {
   $("sq-pill").style.display = "none";
   closeSettings();
   if (!productInfo) {
-    // Non-product page — show placeholder message
+    // Non-product page â€” show placeholder message
     $("sq-product").style.display = "none";
     $("sq-section-lbl").style.display = "none";
     $("sq-spinner").style.display = "none";
@@ -529,12 +534,12 @@ function renderProduct(info) {
     img.style.display = "";
     img.onerror = () => { img.style.display = "none"; };
   }
-  // Show Track button immediately — don't wait for compare results
+  // Show Track button immediately â€” don't wait for compare results
   $("sq-track-section").style.display = "";
   updateTrackBtn();
 }
 
-// ─── Compare ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Compare â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmtPrice(p) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(p);
 }
@@ -546,10 +551,10 @@ async function fetchPrices() {
   $("sq-error").style.display = "none";
   $("sq-track-section").style.display = "none";
 
-  // Show "waking up" hint after 4s — Render free tier cold starts take up to 45s
+  // Show "waking up" hint after 4s â€” Render free tier cold starts take up to 45s
   const wakeHint = setTimeout(() => {
     const err = $("sq-error");
-    if (err) { err.textContent = "Waking up price server… this takes ~30s on first use."; err.style.display = ""; }
+    if (err) { err.textContent = "Waking up price serverâ€¦ this takes ~30s on first use."; err.style.display = ""; }
   }, 4000);
 
   const controller = new AbortController();
@@ -591,30 +596,63 @@ function renderResults() {
   list.innerHTML = "";
   compareResults.slice(0, 5).forEach((r, i) => {
     const isBest = i === 0;
-    const a = document.createElement("a");
-    a.href = r.url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.className = `sq-result${isBest ? " sq-best" : ""}`;
-    a.innerHTML = `
+    const wrap = document.createElement("div");
+    wrap.className = `sq-result-wrap${isBest ? " sq-best" : ""}`;
+    wrap.innerHTML = `
       <span class="sq-badge sq-badge-${BADGES[r.retailer] || "other"}">${r.retailer}</span>
       <span class="sq-result-name">${r.name.slice(0, 45)}</span>
       ${isBest ? '<span class="sq-best-label">BEST</span>' : ""}
       <span class="sq-result-price">${fmtPrice(r.price)}</span>
+      <div class="sq-atc-overlay"><button class="sq-atc-btn">🛒 Add to cart</button></div>
     `;
-    list.appendChild(a);
+    // Clicking the row (not the overlay) opens the product URL
+    wrap.addEventListener("click", (e) => {
+      if (!e.target.closest(".sq-atc-overlay")) window.open(r.url, "_blank", "noopener");
+    });
+    // Per-row add to cart
+    wrap.querySelector(".sq-atc-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      addResultToCart(r, e.currentTarget);
+    });
+    list.appendChild(wrap);
   });
   list.style.display = "flex";
   $("sq-track-section").style.display = "";
   updateTrackBtn();
 }
 
-// ─── Track ────────────────────────────────────────────────────────────────────
+async function addResultToCart(r, btn) {
+  if (!session) { $("sq-auth").style.display = ""; $("sq-email").focus(); return; }
+  btn.disabled = true;
+  btn.textContent = "Adding…";
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_products`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ user_id: session.user.id, product_name: r.name, url: r.url, retailer: r.retailer, current_price: r.price, currency: "USD", drop_threshold_pct: 5, scrape_status: "pending" }),
+    });
+    if (res.status === 401) {
+      session = null;
+      chrome.storage.local.remove("sb_session");
+      $("sq-auth").style.display = "";
+      btn.disabled = false;
+      btn.textContent = "🛒 Add to cart";
+      return;
+    }
+    btn.textContent = "✓ Added!";
+    btn.className = "sq-atc-btn sq-atc-added";
+  } catch {
+    btn.disabled = false;
+    btn.textContent = "🛒 Add to cart";
+  }
+}
+
+// â”€â”€â”€ Track â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function updateTrackBtn() {
   const btn = $("sq-btn-track");
   if (!btn) return;
   if (!session) {
-    btn.textContent = "♡ Track this product";
+    btn.textContent = "🛒 Add to cart";
     btn.disabled = false;
     btn.className = "sq-btn-track";
     $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/signup" target="_blank">Sign in or create a free account</a>`;
@@ -637,13 +675,13 @@ async function handleTrack() {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
       body: JSON.stringify({ user_id: session.user.id, product_name: productInfo.name, url: trackUrl, retailer, current_price: price, currency: "USD", drop_threshold_pct: 5, scrape_status: "pending" }),
     });
-    if (res.status === 401) { session = null; chrome.storage.local.remove("sb_session"); $("sq-auth").style.display = ""; btn.disabled = false; btn.textContent = "♡ Track this product"; return; }
-    btn.className = "sq-btn-track sq-tracked"; btn.textContent = "✓ Tracked"; btn.disabled = true;
-    $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/dashboard" target="_blank">View in watchlist ↗</a>`;
+    if (res.status === 401) { session = null; chrome.storage.local.remove("sb_session"); $("sq-auth").style.display = ""; btn.disabled = false; btn.textContent = "🛒 Add to cart"; return; }
+    btn.className = “sq-btn-track sq-tracked”; btn.textContent = “✓ In cart”; btn.disabled = true;
+    $(“sq-hint”).innerHTML = `<a href=”${SCOUTIQ_URL}/dashboard/cart” target=”_blank”>View in cart ↗</a>`;
     $("sq-auth").style.display = "none";
   } catch {
-    btn.disabled = false; btn.textContent = "♡ Track this product";
-    $("sq-hint").textContent = "Error — try again.";
+    btn.disabled = false; btn.textContent = "🛒 Add to cart";
+    $(“sq-hint”).textContent = “Error — try again.”;
   }
 }
 
@@ -667,7 +705,7 @@ async function handleSignIn() {
   } catch { errEl.textContent = "Network error."; }
 }
 
-// ─── Drag & position persistence ─────────────────────────────────────────────
+// â”€â”€â”€ Drag & position persistence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadStoredPos() {
   return new Promise(r => chrome.storage.local.get(["sq_pos"], d => r(d.sq_pos || null)));
 }
@@ -725,7 +763,7 @@ function makeDraggable(handle, wrap, onDrop) {
         wrap.style.right  = "auto";
         wrap.style.bottom = "auto";
 
-        // elementsFromPoint is expensive — only run every 3 frames
+        // elementsFromPoint is expensive â€” only run every 3 frames
         if (onDrop && ++dropCheckFrame % 3 === 0) {
           const under = document.elementsFromPoint(pendingX, pendingY);
           const imgEl = under.find(el => el.tagName === "IMG" && !el.closest("#__scoutiq__") && (el.naturalWidth > 30 || el.width > 30));
@@ -795,287 +833,363 @@ function handleImageDrop(imgEl) {
   });
 }
 
-// ─── Image reading animation (injected into page DOM over the image) ──────────
+// â”€â”€â”€ Image reading animation (injected into page DOM over the image) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _readImgStyle = "chomp";
 let _trailStyle = "dots";
 
-// ─── Elaborate chomp: pill splits, grows, flies at image, snaps shut ──────────
+// â”€â”€â”€ Elaborate chomp: pill splits, grows, flies at image, snaps shut â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function playChompElaborate(imgEl, onReady) {
   const imgRect = imgEl.getBoundingClientRect();
   if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
 
-  const host = document.getElementById("__scoutiq__");
-  const wrapEl = host?.shadowRoot?.querySelector("#sq-wrap");
+  const host     = document.getElementById("__scoutiq__");
+  const wrapEl   = host?.shadowRoot?.querySelector("#sq-wrap");
   const pillRect = wrapEl?.getBoundingClientRect();
 
-  const imgCX = imgRect.left + imgRect.width / 2;
-  const imgCY = imgRect.top + imgRect.height / 2;
-  const startCX = pillRect ? pillRect.left + pillRect.width / 2 : imgCX;
-  const startCY = pillRect ? pillRect.top + pillRect.height / 2 : imgRect.top - 70;
-  const startW  = pillRect ? pillRect.width  : 150;
-  const startHH = Math.max(16, pillRect ? pillRect.height / 2 : 22);
+  const imgCX   = imgRect.left + imgRect.width  / 2;
+  const imgCY   = imgRect.top  + imgRect.height / 2;
+  const startCX = pillRect ? pillRect.left + pillRect.width  / 2 : imgCX;
+  const startCY = pillRect ? pillRect.top  + pillRect.height / 2 : imgRect.top - 80;
+  const startW  = pillRect ? pillRect.width  : 160;
+  const startHH = Math.max(20, pillRect ? pillRect.height / 2 : 26);
 
-  const bigW  = Math.min(Math.max(imgRect.width * 1.1, 220), window.innerWidth * 0.85);
-  const bigHH = Math.max(bigW * 0.25, 52);
-  const openSmall = startHH * 1.05;
-  const openBig   = bigHH * 0.92;
+  const bigW   = Math.min(Math.max(imgRect.width * 1.15, 250), window.innerWidth * 0.88);
+  const bigHH  = Math.max(bigW * 0.22, 52);
+  const openBig = Math.max(bigHH, imgRect.height * 0.45);
 
-  const stage = document.createElement("div");
-  stage.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:2147483646;`;
-  document.body.appendChild(stage);
-  if (wrapEl) wrapEl.style.visibility = "hidden";
+  // Approach direction for rotation hinge effect
+  const toImgX = imgCX - startCX, toImgY = imgCY - startCY;
+  const toImgDist = Math.hypot(toImgX, toImgY) || 1;
+  const rotSign = toImgX >= 0 ? 1 : -1;  // leading edge opens wider
+  const windX = startCX - (toImgX / toImgDist) * 88;
+  const windY = startCY - (toImgY / toImgDist) * 88;
 
-  // ── SVG jaw builder ─────────────────────────────────────────────────────
-  // viewBox 0 0 100 40 normalized; stretches with div (preserveAspectRatio=none)
-  // Teeth drawn with Bezier curves for organic rounded tips + white enamel
-  function makeJaw(isTop, cx, cy, w, hh, nTeeth) {
-    const vw = 100, vh = 40;
-    const tw = vw / nTeeth;
-    const gumY = isTop ? 15 : 25; // where teeth meet the gum line
+  // Full-screen canvas
+  const cv = document.createElement("canvas");
+  cv.width  = window.innerWidth;
+  cv.height = window.innerHeight;
+  cv.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483646;";
+  document.body.appendChild(cv);
+  const ctx = cv.getContext("2d");
 
-    // Bezier tooth path — curves from gum to rounded tip and back
-    let d;
-    if (isTop) {
-      d = `M 0 0 L ${vw} 0 L ${vw} ${gumY}`;
-      for (let i = nTeeth - 1; i >= 0; i--) {
-        const x0 = tw * (i + 1), xm = tw * (i + 0.5), x1 = tw * i;
-        d += ` L ${x0 - tw*0.06} ${gumY}`;
-        d += ` C ${x0-tw*0.18} ${vh*0.65} ${xm+tw*0.06} ${vh} ${xm} ${vh}`;
-        d += ` C ${xm-tw*0.06} ${vh} ${x1+tw*0.18} ${vh*0.65} ${x1+tw*0.06} ${gumY}`;
-      }
-      d += ` L 0 ${gumY} Z`;
-    } else {
-      d = `M 0 ${vh} L ${vw} ${vh} L ${vw} ${gumY}`;
-      for (let i = nTeeth - 1; i >= 0; i--) {
-        const x0 = tw * (i + 1), xm = tw * (i + 0.5), x1 = tw * i;
-        d += ` L ${x0 - tw*0.06} ${gumY}`;
-        d += ` C ${x0-tw*0.18} ${vh*0.35} ${xm+tw*0.06} 0 ${xm} 0`;
-        d += ` C ${xm-tw*0.06} 0 ${x1+tw*0.18} ${vh*0.35} ${x1+tw*0.06} ${gumY}`;
-      }
-      d += ` L 0 ${gumY} Z`;
-    }
-
-    // White enamel ellipse on each tooth tip
-    let enamel = '';
-    for (let i = 0; i < nTeeth; i++) {
-      const xm = tw * (i + 0.5);
-      const ey = isTop ? vh - 2.5 : 2.5;
-      enamel += `<ellipse cx="${xm}" cy="${ey}" rx="${tw*0.21}" ry="3.2"
-        fill="rgba(255,255,255,0.9)"/>`;
-    }
-
-    // Gum shading (darker ridge where teeth meet jaw)
-    const gumLine = isTop
-      ? `<rect x="0" y="${gumY-2}" width="${vw}" height="3" fill="rgba(90,20,160,0.55)" rx="1.5"/>`
-      : `<rect x="0" y="${gumY-1}" width="${vw}" height="3" fill="rgba(90,20,160,0.55)" rx="1.5"/>`;
-
-    const uid = `sq-j-${Math.random().toString(36).slice(2,7)}`;
-    const el = document.createElement("div");
-    el.style.cssText = `
-      position:fixed;
-      left:${cx - w/2}px; top:${isTop ? cy - hh : cy}px;
-      width:${w}px; height:${hh}px;
-      pointer-events:none;
-    `;
-    el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg"
-      width="100%" height="100%"
-      viewBox="0 0 ${vw} ${vh}"
-      preserveAspectRatio="none"
-      style="display:block;overflow:visible;">
-      <defs>
-        <linearGradient id="${uid}g" x1="0" y1="${isTop?0:1}" x2="0" y2="${isTop?1:0}">
-          <stop offset="0%"   stop-color="#3b0764"/>
-          <stop offset="40%"  stop-color="#6d28d9"/>
-          <stop offset="100%" stop-color="#a78bfa"/>
-        </linearGradient>
-        <filter id="${uid}s">
-          <feDropShadow dx="0" dy="${isTop?3:-3}" stdDeviation="4"
-            flood-color="#2e1065" flood-opacity="0.7"/>
-        </filter>
-        <filter id="${uid}gl" x="-10%" y="-10%" width="120%" height="120%">
-          <feGaussianBlur stdDeviation="1.2" result="b"/>
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <!-- jaw body with gradient -->
-      <path d="${d}" fill="url(#${uid}g)" filter="url(#${uid}s)"/>
-      <!-- edge highlight -->
-      <path d="${d}" fill="none" stroke="rgba(167,139,250,0.5)" stroke-width="0.7"/>
-      <!-- gum line -->
-      ${gumLine}
-      <!-- enamel on each tip (glow filter) -->
-      <g filter="url(#${uid}gl)">${enamel}</g>
-    </svg>`;
-    stage.appendChild(el);
-    return el;
-  }
-
-  // ── Throat: dark void visible between open jaws ──────────────────────────
-  function makeThroat(cx, cy, w, openGap) {
-    const el = document.createElement("div");
-    el.style.cssText = `position:fixed;
-      left:${cx - w/2}px; top:${cy - openGap}px;
-      width:${w}px; height:${openGap * 2}px;
-      background:radial-gradient(ellipse at 50% 50%,
-        rgba(15,0,40,0.97) 0%,rgba(30,5,70,0.88) 55%,transparent 100%);
-      pointer-events:none;`;
-    stage.appendChild(el);
-    return el;
-  }
-
-  // ── Shadow overlay creeps over image as jaws approach ────────────────────
+  // Image darkening overlay
   const imgOverlay = document.createElement("div");
-  imgOverlay.style.cssText = `position:fixed;
-    left:${imgRect.left}px; top:${imgRect.top}px;
-    width:${imgRect.width}px; height:${imgRect.height}px;
-    background:rgba(20,0,50,0); pointer-events:none;
-    border-radius:6px; z-index:2147483644;
-    transition:background 0.38s ease;`;
+  imgOverlay.style.cssText = `position:fixed;left:${imgRect.left}px;top:${imgRect.top}px;
+    width:${imgRect.width}px;height:${imgRect.height}px;
+    background:rgba(20,0,50,0);pointer-events:none;border-radius:6px;z-index:2147483644;`;
   document.body.appendChild(imgOverlay);
 
-  // ── Build initial jaws at pill position ───────────────────────────────────
-  const nSmall = Math.max(3, Math.floor(startW / 16));
-  const topJ   = makeJaw(true,  startCX, startCY, startW, startHH, nSmall);
-  const botJ   = makeJaw(false, startCX, startCY, startW, startHH, nSmall);
-  let throat   = null;
-
-  // Save image's original style props so we can cleanly restore them
+  if (wrapEl) wrapEl.style.visibility = "hidden";
   const imgSavedTrans  = imgEl.style.transition;
   const imgSavedTransf = imgEl.style.transform;
   const imgSavedFilter = imgEl.style.filter;
 
-  function tr(el, dur, ease, styles) {
-    el.style.transition = `all ${dur}ms ${ease}`;
-    requestAnimationFrame(() => requestAnimationFrame(() => Object.assign(el.style, styles)));
+  // Seeded tooth variation — deterministic so teeth look the same every frame
+  const tseed = Math.floor(Math.random() * 9999);
+  function sr(n) { return ((n * 1664525 + 1013904223) & 0x7fffffff) / 0x7fffffff; }
+
+  // Animation state object — GSAP tweens these directly
+  const S = { cx: startCX, cy: startCY, w: startW, hh: startHH,
+               gap: 0, topRot: 0, botRot: 0, alpha: 1 };
+
+  // ── Canvas helpers ──────────────────────────────────────────────────────────
+  function rrect(p, x, y, w, h, r) {
+    r = Math.min(r, w * 0.5, h * 0.5);
+    p.moveTo(x + r, y);
+    p.lineTo(x + w - r, y);     p.arcTo(x+w, y,   x+w, y+r,   r);
+    p.lineTo(x + w, y+h-r);     p.arcTo(x+w, y+h, x+w-r,y+h, r);
+    p.lineTo(x + r, y + h);     p.arcTo(x,   y+h, x, y+h-r,   r);
+    p.lineTo(x, y + r);         p.arcTo(x,   y,   x+r, y,      r);
+    p.closePath();
   }
 
-  // ── Phase 1: Pill cracks open, teeth show ────────────────────────────────
-  setTimeout(() => {
-    tr(topJ, 290, "cubic-bezier(0.34,1.56,0.64,1)", {
-      top: `${startCY - startHH - openSmall}px`
-    });
-    tr(botJ, 290, "cubic-bezier(0.34,1.56,0.64,1)", {
-      top: `${startCY + openSmall}px`
-    });
-    // Throat void appears as gap opens
-    setTimeout(() => {
-      throat = makeThroat(startCX, startCY, startW, openSmall * 0.9);
-    }, 200);
-  }, 25);
+  function drawHalf(isTop) {
+    const { cx, cy, w, hh, gap } = S;
+    const rot  = isTop ? S.topRot : S.botRot;
+    const gumY = cy + (isTop ? -gap : gap);
+    const r    = hh * 0.5;
+    const td   = isTop ? 1 : -1;   // tooth direction: top->down(+y), bottom->up(-y)
+    const nTeeth = Math.max(4, Math.min(9, Math.floor(w / 34)));
+    const slotW  = w / nTeeth;
+    const toothH = Math.max(hh * 0.54, 13);
 
-  // ── Phase 2: Launch at image, grow to swallow width, shadow falls ─────────
-  setTimeout(() => {
-    imgOverlay.style.background = "rgba(20,0,50,0.42)";
+    ctx.save();
+    ctx.globalAlpha = S.alpha;
+    ctx.translate(cx, gumY);
+    ctx.rotate(rot);
 
-    tr(topJ, 420, "cubic-bezier(0.4,0,0.2,1)", {
-      left: `${imgCX - bigW/2}px`,
-      top:  `${imgCY - bigHH - openBig}px`,
-      width: `${bigW}px`, height: `${bigHH}px`,
-    });
-    tr(botJ, 420, "cubic-bezier(0.4,0,0.2,1)", {
-      left: `${imgCX - bigW/2}px`,
-      top:  `${imgCY + openBig}px`,
-      width: `${bigW}px`, height: `${bigHH}px`,
-    });
-    if (throat) {
-      tr(throat, 420, "cubic-bezier(0.4,0,0.2,1)", {
-        left: `${imgCX - bigW/2}px`,
-        top:  `${imgCY - openBig}px`,
-        width: `${bigW}px`, height: `${openBig * 2}px`,
-      });
+    // Body path
+    const bp = new Path2D();
+    rrect(bp, -w/2, isTop ? -hh : 0, w, hh, r);
+
+    // 1. Drop shadow pass
+    ctx.save();
+    ctx.shadowColor  = "rgba(0,0,0,0.65)";
+    ctx.shadowBlur   = 24;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = isTop ? 14 : -14;
+    ctx.fillStyle = "#1a0035";
+    ctx.fill(bp);
+    ctx.restore();
+
+    // 2. Main body gradient — light at outer edge, deep dark at seam
+    const y0 = isTop ? -hh : hh, y1 = 0;
+    const mg = ctx.createLinearGradient(0, y0, 0, y1);
+    mg.addColorStop(0,    "#e9d5ff");  // bright lavender outer edge
+    mg.addColorStop(0.18, "#a855f7");  // purple
+    mg.addColorStop(0.55, "#6d28d9");  // deep purple
+    mg.addColorStop(1,    "#0f0020");  // near-black at seam
+    ctx.fillStyle = mg;
+    ctx.fill(bp);
+
+    // 3. Side edge darkening — cylindrical curvature illusion
+    const sg = ctx.createLinearGradient(-w/2, 0, w/2, 0);
+    sg.addColorStop(0,    "rgba(0,0,0,0.5)");
+    sg.addColorStop(0.12, "rgba(0,0,0,0.0)");
+    sg.addColorStop(0.88, "rgba(0,0,0,0.0)");
+    sg.addColorStop(1,    "rgba(0,0,0,0.5)");
+    ctx.fillStyle = sg;
+    ctx.fill(bp);
+
+    // 4. Specular highlight blob (offset left like real light source)
+    const sy = isTop ? -hh * 0.72 : hh * 0.28;
+    const sp = ctx.createRadialGradient(-w*0.08, sy, 0, -w*0.08, sy, w*0.3);
+    sp.addColorStop(0,    "rgba(255,255,255,0.78)");
+    sp.addColorStop(0.28, "rgba(255,255,255,0.28)");
+    sp.addColorStop(0.65, "rgba(255,255,255,0.06)");
+    sp.addColorStop(1,    "rgba(255,255,255,0)");
+    ctx.fillStyle = sp;
+    ctx.fill(bp);
+
+    // 5. Inner (seam) ambient occlusion — thin dark strip at gum line
+    ctx.save();
+    ctx.clip(bp);
+    const ao = ctx.createLinearGradient(0, 0, 0, isTop ? -hh*0.18 : hh*0.18);
+    ao.addColorStop(0, "rgba(0,0,0,0.6)");
+    ao.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = ao;
+    ctx.fillRect(-w/2, isTop ? -hh*0.18 : 0, w, hh*0.18);
+    ctx.restore();
+
+    // 6. Rim light on outer edge
+    ctx.strokeStyle = "rgba(216,180,254,0.55)";
+    ctx.lineWidth = 1.8;
+    ctx.stroke(bp);
+
+    // ── Gum tissue ──────────────────────────────────────────────────────────
+    const gh  = toothH * 0.28;
+    const gp  = new Path2D();
+    gp.moveTo(-w/2, 0);
+    for (let i = 0; i < nTeeth; i++) {
+      const x0 = -w/2 + i*slotW, xm = x0 + slotW*0.5;
+      gp.lineTo(x0 + slotW*0.08, 0);
+      gp.quadraticCurveTo(xm, td*gh, x0 + slotW - slotW*0.08, 0);
     }
-  }, 390);
+    gp.lineTo(w/2, 0);
+    gp.lineTo(w/2, td*gh*0.45);
+    gp.lineTo(-w/2, td*gh*0.45);
+    gp.closePath();
 
-  // ── Phase 3: SNAP SHUT ────────────────────────────────────────────────────
+    const gg = ctx.createLinearGradient(0, 0, 0, td*gh);
+    gg.addColorStop(0, "#c8304a");
+    gg.addColorStop(1, "#7a1828");
+    ctx.fillStyle = gg;
+    ctx.fill(gp);
+    // Wet sheen on gum
+    const gs = ctx.createLinearGradient(-w/2, 0, w/2, 0);
+    gs.addColorStop(0,   "rgba(255,190,205,0)");
+    gs.addColorStop(0.38,"rgba(255,190,205,0.32)");
+    gs.addColorStop(0.62,"rgba(255,190,205,0.32)");
+    gs.addColorStop(1,   "rgba(255,190,205,0)");
+    ctx.fillStyle = gs;
+    ctx.fill(gp);
+
+    // ── Teeth ───────────────────────────────────────────────────────────────
+    for (let i = 0; i < nTeeth; i++) {
+      const s1 = sr(tseed+i*7), s2 = sr(tseed+i*7+1), s3 = sr(tseed+i*7+2);
+      const xc = -w/2 + (i+0.5)*slotW;
+      const tw = slotW * (0.48 + s1*0.24);
+      const th = toothH * (0.70 + s2*0.44);
+      const tilt = (s3 - 0.5) * 0.09;
+
+      ctx.save();
+      ctx.translate(xc, 0);
+      ctx.rotate(tilt);
+
+      const tp = new Path2D();
+      tp.moveTo(-tw/2, 0);
+      tp.lineTo( tw/2, 0);
+      tp.bezierCurveTo( tw/2, td*th*0.55,  tw*0.34, td*th, 0, td*th);
+      tp.bezierCurveTo(-tw*0.34, td*th,   -tw/2, td*th*0.55, -tw/2, 0);
+      tp.closePath();
+
+      // Tooth shadow
+      ctx.save();
+      ctx.shadowColor = "rgba(5,0,20,0.65)";
+      ctx.shadowBlur  = 5;
+      ctx.shadowOffsetX = 1.5;
+      ctx.shadowOffsetY = td * 3;
+      const tg = ctx.createLinearGradient(0, 0, 0, td*th);
+      tg.addColorStop(0,    "#7c3aed");   // purple base blending into gum
+      tg.addColorStop(0.09, "#f0ebff");   // fast ivory transition
+      tg.addColorStop(0.6,  "#ffffff");   // white enamel
+      tg.addColorStop(1,    "#ccc0e8");   // tip shadow
+      ctx.fillStyle = tg;
+      ctx.fill(tp);
+      ctx.restore();
+
+      // Enamel specular — thin bright sliver on left face of tooth
+      const ep = new Path2D();
+      ep.moveTo(-tw*0.28, 0);
+      ep.bezierCurveTo(-tw*0.08, td*th*0.12, -tw*0.04, td*th*0.36, -tw*0.04, td*th*0.5);
+      ep.lineTo(-tw*0.22, td*th*0.5);
+      ep.bezierCurveTo(-tw*0.28, td*th*0.33, -tw*0.32, td*th*0.12, -tw*0.28, 0);
+      ep.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.fill(ep);
+
+      ctx.restore();
+    }
+
+    ctx.restore(); // end half transform
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    drawHalf(true);
+    drawHalf(false);
+  }
+
+  gsap.ticker.add(draw);
+
+  // ── Phase 1 (30ms): CRACK OPEN ─────────────────────────────────────────────
   setTimeout(() => {
-    tr(topJ, 105, "cubic-bezier(0.22,0,0.5,1)", { top: `${imgCY - bigHH}px` });
-    tr(botJ, 105, "cubic-bezier(0.22,0,0.5,1)", { top: `${imgCY}px` });
-    if (throat) { tr(throat, 80, "ease-in", { opacity:"0", height:"0", top:`${imgCY}px` }); }
+    gsap.to(S, { gap: startHH*0.85, topRot: rotSign*0.18, botRot: -rotSign*0.18,
+      duration: 0.42, ease: "back.out(2.5)" });
+    // Spit sparks from seam
+    for (let i = 0; i < 12; i++) {
+      const sp = document.createElement("div");
+      const sz = 3 + Math.random()*6;
+      const a  = (Math.random()-0.5) * Math.PI * 1.2;
+      const d  = 22 + Math.random()*55;
+      const col = `hsl(${265+Math.random()*30},85%,${60+Math.random()*25}%)`;
+      sp.style.cssText = `position:fixed;left:${startCX-sz/2}px;top:${startCY-sz/2}px;
+        width:${sz}px;height:${sz}px;border-radius:50%;pointer-events:none;z-index:2147483647;
+        background:${col};box-shadow:0 0 ${sz*1.6}px ${col};`;
+      document.body.appendChild(sp);
+      gsap.to(sp, { x:Math.cos(a)*d, y:Math.sin(a)*d, scale:0, opacity:0,
+        duration:0.28+Math.random()*0.22, ease:"power2.out",
+        delay:Math.random()*0.05, onComplete:()=>sp.remove() });
+    }
+  }, 30);
 
-    // ── White flash ───────────────────────────────────────────────────────
-    const flash = document.createElement("div");
-    flash.style.cssText = `position:fixed;inset:0;background:#fff;opacity:0.65;
-      pointer-events:none;z-index:2147483643;`;
-    stage.appendChild(flash);
-    setTimeout(() => { flash.style.transition="opacity 0.3s"; flash.style.opacity="0"; }, 55);
-    setTimeout(() => flash.remove(), 380);
+  // ── Phase 2 (750ms): GAPE WIDE ─────────────────────────────────────────────
+  setTimeout(() => {
+    gsap.to(S, { gap: startHH*1.65, topRot: rotSign*0.26, botRot: -rotSign*0.26,
+      duration: 0.55, ease: "back.out(1.7)" });
+  }, 750);
 
-    // ── Screen shake ──────────────────────────────────────────────────────
-    const shakeStyle = document.createElement("style");
-    shakeStyle.textContent = `@keyframes sq-chomp-shake {
-      0%,100%{transform:translate(0,0)rotate(0)}
-      14%{transform:translate(-8px,5px)rotate(-0.5deg)}
-      28%{transform:translate(7px,-7px)rotate(0.4deg)}
-      42%{transform:translate(-5px,5px)rotate(-0.3deg)}
-      57%{transform:translate(5px,-3px)rotate(0.2deg)}
-      71%{transform:translate(-3px,2px)rotate(-0.1deg)}
-      85%{transform:translate(2px,-1px)}
-    }`;
-    document.head.appendChild(shakeStyle);
-    stage.style.animation = "sq-chomp-shake 0.48s cubic-bezier(0.36,0.07,0.19,0.97)";
-    setTimeout(() => { stage.style.animation=""; shakeStyle.remove(); }, 520);
+  // ── Phase 3 (1380ms): WIND-UP ──────────────────────────────────────────────
+  setTimeout(() => {
+    gsap.to(S, { cx: windX, cy: windY, duration: 0.38, ease: "power2.out" });
+    gsap.to(imgOverlay, { backgroundColor: "rgba(20,0,50,0.28)", duration: 0.5 });
+  }, 1380);
 
-    // ── Image consumed ────────────────────────────────────────────────────
-    imgOverlay.style.transition = "background 0.12s ease";
-    imgOverlay.style.background = "rgba(88,28,135,0.78)";
-    imgEl.style.transition = "transform 0.18s ease, filter 0.18s ease";
-    imgEl.style.transform  = "scale(0.9)";
-    imgEl.style.filter     = "brightness(0.25) saturate(0) blur(1px)";
+  // ── Phase 4 (1840ms): LUNGE ────────────────────────────────────────────────
+  setTimeout(() => {
+    gsap.killTweensOf(S, "cx,cy,w,hh,gap,topRot,botRot");
+    gsap.to(S, { cx:imgCX, cy:imgCY, w:bigW, hh:bigHH, gap:openBig,
+      topRot:rotSign*0.32, botRot:-rotSign*0.32,
+      duration:0.54, ease:"power3.in" });
+    gsap.to(imgOverlay, { backgroundColor:"rgba(20,0,50,0.62)", duration:0.5 });
+  }, 1840);
 
-    // ── Particle burst from bite center ───────────────────────────────────
-    for (let i = 0; i < 24; i++) {
+  // ── Phase 5 (2440ms): SNAP SHUT ────────────────────────────────────────────
+  setTimeout(() => {
+    gsap.killTweensOf(S);
+    gsap.to(S, { gap:0, topRot:0, botRot:0, duration:0.13, ease:"power4.in" });
+
+    // Flash
+    const fl = document.createElement("div");
+    fl.style.cssText = "position:fixed;inset:0;background:#fff;opacity:0.85;pointer-events:none;z-index:2147483645;";
+    document.body.appendChild(fl);
+    gsap.to(fl, { opacity:0, duration:0.5, onComplete:()=>fl.remove() });
+
+    // Shockwave rings
+    const bsz = Math.max(imgRect.width, imgRect.height) * 0.72;
+    for (let i = 0; i < 3; i++) {
+      const ring = document.createElement("div");
+      const sz = bsz + i*62;
+      ring.style.cssText = `position:fixed;left:${imgCX-sz/2}px;top:${imgCY-sz/2}px;
+        width:${sz}px;height:${sz}px;border-radius:50%;pointer-events:none;
+        border:${4-i}px solid rgba(167,139,250,${0.9-i*0.22});
+        z-index:2147483645;transform:scale(0);`;
+      document.body.appendChild(ring);
+      gsap.to(ring, { scale:1, opacity:0, duration:0.7,
+        delay:i*0.12, ease:"power1.out", onComplete:()=>ring.remove() });
+    }
+
+    // Screen shake
+    gsap.to(cv, { keyframes:[
+      { x:-11, y:8,  rotation:-0.6, duration:0.07 },
+      { x:10,  y:-10,rotation:0.6,  duration:0.07 },
+      { x:-7,  y:7,  rotation:-0.4, duration:0.07 },
+      { x:7,   y:-4, rotation:0.3,  duration:0.07 },
+      { x:-3,  y:2,  rotation:-0.1, duration:0.07 },
+      { x:0,   y:0,  rotation:0,    duration:0.08 },
+    ]});
+
+    gsap.to(imgOverlay, { backgroundColor:"rgba(88,28,135,0.88)", duration:0.18 });
+    gsap.to(imgEl, { scale:0.85, filter:"brightness(0.12) saturate(0) blur(3px)",
+      duration:0.22, ease:"power3.in" });
+
+    // Particles
+    for (let i = 0; i < 44; i++) {
       const p = document.createElement("div");
-      const sz    = 5 + Math.random() * 12;
-      const angle = (i / 24) * Math.PI * 2 + Math.random() * 0.28;
-      const dist  = 55 + Math.random() * 100;
-      const hue   = 265 + Math.random() * 50;
-      const lit   = 50 + Math.random() * 25;
-      const col   = `hsl(${hue},85%,${lit}%)`;
-      p.style.cssText = `position:fixed;
-        left:${imgCX - sz/2}px; top:${imgCY - sz/2}px;
-        width:${sz}px; height:${sz}px; border-radius:50%;
-        background:${col}; pointer-events:none; z-index:2147483645;
-        box-shadow:0 0 ${sz*1.2}px ${col};`;
-      stage.appendChild(p);
-      const delay = Math.random() * 60;
-      setTimeout(() => {
-        p.style.transition = `all ${0.38+Math.random()*0.35}s cubic-bezier(0,0,0.3,1)`;
-        p.style.transform  = `translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`;
-        p.style.opacity    = "0";
-      }, delay);
-      setTimeout(() => p.remove(), 900);
+      const isShard = i%4===0;
+      const sz  = isShard ? 3+Math.random()*5 : 6+Math.random()*14;
+      const szH = isShard ? sz*(3.5+Math.random()*4) : sz;
+      const a   = (i/44)*Math.PI*2 + Math.random()*0.4;
+      const d   = 80+Math.random()*160;
+      const col = `hsl(${255+Math.random()*65},90%,${46+Math.random()*30}%)`;
+      p.style.cssText = `position:fixed;left:${imgCX-sz/2}px;top:${imgCY-szH/2}px;
+        width:${sz}px;height:${szH}px;border-radius:${isShard?2:50}%;
+        background:${col};box-shadow:0 0 ${sz*1.6}px ${col};
+        pointer-events:none;z-index:2147483645;transform-origin:50% 50%;`;
+      document.body.appendChild(p);
+      gsap.to(p, { x:Math.cos(a)*d, y:Math.sin(a)*d, scale:0, opacity:0,
+        rotation:isShard?(Math.random()-0.5)*260:0,
+        duration:0.7+Math.random()*0.55, ease:"power2.out",
+        delay:Math.random()*0.1, onComplete:()=>p.remove() });
     }
 
-    // Signal panel to open at the moment of the bite
     onReady();
-  }, 860);
+  }, 2440);
 
-  // ── Phase 4: Bite mark + image recovers + jaws exit ──────────────────────
+  // ── Phase 6 (2740ms): RETREAT + CLEANUP ────────────────────────────────────
   setTimeout(() => {
     addBiteMarkSVG(imgRect);
-
-    // Image springs back
-    imgOverlay.style.transition = "background 0.55s ease";
-    imgOverlay.style.background = "rgba(20,0,50,0)";
-    imgEl.style.transition = `transform 0.55s cubic-bezier(0.34,1.3,0.64,1), filter 0.45s ease`;
-    imgEl.style.transform  = imgSavedTransf || "";
-    imgEl.style.filter     = imgSavedFilter || "";
-
-    tr(topJ, 350, "cubic-bezier(0.4,0,1,1)", {
-      top: `${-bigHH * 3}px`, opacity: "0",
+    gsap.to(imgOverlay, { backgroundColor:"rgba(20,0,50,0)", duration:0.75, ease:"power1.out" });
+    gsap.to(imgEl, { scale:1, filter:imgSavedFilter||"none", duration:0.75, ease:"back.out(1.6)",
+      onComplete:() => {
+        gsap.set(imgEl, { clearProps:"scale,filter" });
+        imgEl.style.transition = imgSavedTrans;
+        if (imgSavedTransf) imgEl.style.transform = imgSavedTransf;
+        if (imgSavedFilter)  imgEl.style.filter   = imgSavedFilter;
+      }
     });
-    tr(botJ, 350, "cubic-bezier(0.4,0,1,1)", {
-      top: `${window.innerHeight + bigHH * 2}px`, opacity: "0",
-    });
+    // Jaws fly apart as canvas fades
+    gsap.to(S, { gap: window.innerHeight * 0.8, alpha:0, duration:0.45, ease:"power3.in" });
 
     setTimeout(() => {
-      imgEl.style.transition = imgSavedTrans;
+      gsap.ticker.remove(draw);
       if (wrapEl) wrapEl.style.visibility = "visible";
       imgOverlay.remove();
-      stage.remove();
-    }, 420);
-  }, 1090);
+      cv.remove();
+    }, 500);
+  }, 2740);
 }
+
 
 function addBiteMarkSVG(rect) {
   const w = rect.width;
@@ -1129,7 +1243,7 @@ function addBiteMarkSVG(rect) {
   setTimeout(() => el.remove(), 2200);
 }
 
-// ─── Absorb: beam connects pill to image, colors drain into pill ──────────────
+// â”€â”€â”€ Absorb: beam connects pill to image, colors drain into pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function playDrainAnim(imgEl, onReady) {
   const imgRect = imgEl.getBoundingClientRect();
   if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
@@ -1146,7 +1260,7 @@ function playDrainAnim(imgEl, onReady) {
   stage.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:2147483646;`;
   document.body.appendChild(stage);
 
-  // ── Beam: animated SVG path drawn from pill to image top ─────────────────
+  // â”€â”€ Beam: animated SVG path drawn from pill to image top â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const ns  = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   svg.style.cssText = `position:absolute;inset:0;width:100%;height:100%;overflow:visible;`;
@@ -1161,7 +1275,7 @@ function playDrainAnim(imgEl, onReady) {
     return el;
   }
 
-  // Gradient along the beam (pill colour → image anchor)
+  // Gradient along the beam (pill colour â†’ image anchor)
   const grad = svgEl("linearGradient", {
     id:"sq-d-grad", gradientUnits:"userSpaceOnUse",
     x1:pCX, y1:pCY, x2:ancX, y2:ancY,
@@ -1199,7 +1313,7 @@ function playDrainAnim(imgEl, onReady) {
     beamPath.setAttribute("stroke-dashoffset", "0");
   }));
 
-  // ── Drain overlay: image copy with purple-grey filter sweeps top→bottom ───
+  // â”€â”€ Drain overlay: image copy with purple-grey filter sweeps topâ†’bottom â”€â”€â”€
   const imgCS   = window.getComputedStyle(imgEl);
   const imgCopy = document.createElement("img");
   imgCopy.src = imgEl.src;
@@ -1231,7 +1345,7 @@ function playDrainAnim(imgEl, onReady) {
     drainEdge.style.top = `${imgRect.top + imgRect.height - 4}px`;
   }, 300);
 
-  // ── Energy particles: colored dots travel from image to pill ──────────────
+  // â”€â”€ Energy particles: colored dots travel from image to pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const drainStart = Date.now() + 300;
   let pInt;
   setTimeout(() => {
@@ -1263,7 +1377,7 @@ function playDrainAnim(imgEl, onReady) {
     setTimeout(() => clearInterval(pInt), 1020);
   }, 300);
 
-  // ── Pill absorption: expanding rings radiate outward as energy arrives ─────
+  // â”€â”€ Pill absorption: expanding rings radiate outward as energy arrives â”€â”€â”€â”€â”€
   const absorbSty = document.createElement("style");
   absorbSty.textContent = `@keyframes sq-absorb-ring {
     0%   { transform:scale(1);   opacity:0.9; }
@@ -1288,7 +1402,7 @@ function playDrainAnim(imgEl, onReady) {
   };
   [240, 460, 660, 840, 980, 1090, 1190].forEach(t => setTimeout(spawnRing, t));
 
-  // ── Full-charge burst from pill + open panel ──────────────────────────────
+  // â”€â”€ Full-charge burst from pill + open panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   setTimeout(() => {
     // Bright flash on pill
     const pillFlash = document.createElement("div");
@@ -1325,7 +1439,7 @@ function playDrainAnim(imgEl, onReady) {
     onReady();
   }, 1340);
 
-  // ── Cleanup: fade drain copy away, restore ────────────────────────────────
+  // â”€â”€ Cleanup: fade drain copy away, restore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   setTimeout(() => {
     imgCopy.style.transition  = "opacity 0.7s ease";
     imgCopy.style.opacity     = "0";
@@ -1340,7 +1454,7 @@ function playDrainAnim(imgEl, onReady) {
   }, 1580);
 }
 
-// ─── Wand: materializes, charges, casts lightning bolt, stamps rune circle ────
+// â”€â”€â”€ Wand: materializes, charges, casts lightning bolt, stamps rune circle â”€â”€â”€â”€
 function playWandAnim(imgEl, onReady) {
   const imgRect = imgEl.getBoundingClientRect();
   if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
@@ -1400,7 +1514,7 @@ function playWandAnim(imgEl, onReady) {
   wg.appendChild(se("stop", { offset:"100%", "stop-color":"#8b5cf6" }));
   defs.appendChild(wg);
 
-  // ── Wand shaft (tapered quad) + crystal tip star ──────────────────────────
+  // â”€â”€ Wand shaft (tapered quad) + crystal tip star â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const bw = 7, tw2 = 2.5;
   const shaftPath =
     `M ${basX + Math.cos(perp)*bw/2} ${basY + Math.sin(perp)*bw/2}
@@ -1443,7 +1557,7 @@ function playWandAnim(imgEl, onReady) {
   // Wand materializes
   setTimeout(() => { shaft.style.opacity = "1"; tipStar.style.opacity = "1"; }, 30);
 
-  // ── Charge phase: CSS orbital rings around tip ────────────────────────────
+  // â”€â”€ Charge phase: CSS orbital rings around tip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const chargeSty = document.createElement("style");
   chargeSty.textContent = `
     @keyframes sq-orbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -1496,7 +1610,7 @@ function playWandAnim(imgEl, onReady) {
   // Tip pulse during charge
   tipStar.style.animation = "sq-tip-pulse 0.6s ease-in-out infinite";
 
-  // ── Cast: collapse orbiters, draw lightning bolt, impact ──────────────────
+  // â”€â”€ Cast: collapse orbiters, draw lightning bolt, impact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   setTimeout(() => {
     // Collapse all orbiters into tip (flash of energy)
     orbiters.forEach(o => {
@@ -1561,7 +1675,7 @@ function playWandAnim(imgEl, onReady) {
     }, 450);
   }, 1050);
 
-  // ── Impact: sparks + rotating rune circle on image ─────────────────────────
+  // â”€â”€ Impact: sparks + rotating rune circle on image â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   setTimeout(() => {
     // Sparks explode from image center
     for (let i = 0; i < 18; i++) {
@@ -1591,7 +1705,7 @@ function playWandAnim(imgEl, onReady) {
     rg.appendChild(se("circle", { cx:imgCX,cy:imgCY,r:rr, fill:"none", stroke:"#a78bfa","stroke-width":"1.5" }));
     rg.appendChild(se("circle", { cx:imgCX,cy:imgCY,r:rr*0.68, fill:"none", stroke:"#7c3aed","stroke-width":"1","stroke-dasharray":"5 7" }));
     rg.appendChild(se("circle", { cx:imgCX,cy:imgCY,r:rr*0.35, fill:"rgba(109,40,217,0.12)",stroke:"#c4b5fd","stroke-width":"0.8" }));
-    const syms = ["✦","◈","⬡","★","◆","✧"];
+    const syms = ["âœ¦","â—ˆ","â¬¡","â˜…","â—†","âœ§"];
     for (let i = 0; i < 6; i++) {
       const a = (i/6)*Math.PI*2 - Math.PI/2;
       const lx1 = imgCX + Math.cos(a)*rr*0.36, ly1 = imgCY + Math.sin(a)*rr*0.36;
@@ -1625,7 +1739,7 @@ function playWandAnim(imgEl, onReady) {
     onReady();
   }, 1280);
 
-  // ── Wand fades out ─────────────────────────────────────────────────────────
+  // â”€â”€ Wand fades out â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   setTimeout(() => {
     [shaft, tipStar].forEach(el => { el.style.opacity = "0"; });
     chargeSty.remove();
@@ -1711,7 +1825,7 @@ function playImageReadAnim(imgEl, onReady = () => {}) {
   setTimeout(() => wrap.remove(), 950);
 }
 
-// ─── Movement trail ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Movement trail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _lastTrailTime = 0;
 function emitTrail(x, y) {
   if (_trailStyle === "none") return;
@@ -1721,7 +1835,7 @@ function emitTrail(x, y) {
   _lastTrailTime = now;
 
   if (_trailStyle === "dots") {
-    // Bold Pac-Man style dots — large, immediate fade
+    // Bold Pac-Man style dots â€” large, immediate fade
     const size = 14 + Math.random() * 8;
     const el = document.createElement("div");
     el.style.cssText = `position:fixed;left:${x-size/2}px;top:${y-size/2}px;
@@ -1737,7 +1851,7 @@ function emitTrail(x, y) {
 
   } else if (_trailStyle === "sparkle") {
     // High-energy sparkles that shoot outward
-    const chars = ["✦","✧","★","◆","⬟","✺"];
+    const chars = ["âœ¦","âœ§","â˜…","â—†","â¬Ÿ","âœº"];
     for (let i = 0; i < 2; i++) {
       const el = document.createElement("div");
       el.textContent = chars[Math.floor(Math.random() * chars.length)];
@@ -1759,7 +1873,7 @@ function emitTrail(x, y) {
     }
 
   } else if (_trailStyle === "comet") {
-    // Dense fast-fading orbs — classic comet tail
+    // Dense fast-fading orbs â€” classic comet tail
     for (let i = 0; i < 3; i++) {
       const size = (8 + Math.random() * 6) * (1 - i * 0.2);
       const ox = (Math.random()-0.5)*6, oy = (Math.random()-0.5)*6;
@@ -1777,7 +1891,7 @@ function emitTrail(x, y) {
     }
 
   } else if (_trailStyle === "burst") {
-    // Explosive burst of particles at each point — very visible
+    // Explosive burst of particles at each point â€” very visible
     const count = 6;
     for (let i = 0; i < count; i++) {
       const el = document.createElement("div");
@@ -1800,10 +1914,10 @@ function emitTrail(x, y) {
   }
 }
 
-function startReadingAnim() {} // kept for compat — now handled by playImageReadAnim
+function startReadingAnim() {} // kept for compat â€” now handled by playImageReadAnim
 function stopReadingAnim() {}  // image overlays self-remove via setTimeout
 
-// ─── Animations ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function applyPillAnimation(style) {
   const pill = $("sq-pill");
   if (!pill) return;
@@ -1815,7 +1929,7 @@ function applyPillAnimation(style) {
     return;
   }
 
-  // "pop" — spring entrance, then glow pulse once finished
+  // "pop" â€” spring entrance, then glow pulse once finished
   pill.classList.add("sq-anim-pop");
   pill.addEventListener("animationend", () => {
     pill.classList.remove("sq-anim-pop");
@@ -1826,7 +1940,7 @@ function applyPillAnimation(style) {
   }, { once: true });
 }
 
-// ─── Inject panel ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Inject panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function inject(info) {
   const existing = document.getElementById("__scoutiq__");
   if (existing) existing.remove();
@@ -1911,7 +2025,7 @@ function inject(info) {
   injected = true;
 }
 
-// ─── Stored product ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Stored product â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadStoredProduct() {
   return new Promise(r => chrome.storage.local.get(["sq_last_product"], d => r(d.sq_last_product || null)));
 }
@@ -1920,7 +2034,7 @@ function saveStoredProduct(product) {
   else chrome.storage.local.remove("sq_last_product");
 }
 
-// ─── Pill state ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Pill state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function pillOff(saveState = false) {
   productInfo = null;
   compareResults = [];
@@ -1938,7 +2052,7 @@ async function pillOn(saveState = false) {
   if (saveState) chrome.storage.local.set({ sq_pill_active: true });
 }
 
-// Boot: runs once per real page load — check both explicit state and auto-detect
+// Boot: runs once per real page load â€” check both explicit state and auto-detect
 async function boot() {
   if (injected) return;
   const data = await chrome.storage.local.get(["sq_pill_active", "sq_auto_open"]);
@@ -1948,7 +2062,7 @@ async function boot() {
   await pillOn();
 }
 
-// SPA navigation — hide pill on URL change, re-run boot after page settles
+// SPA navigation â€” hide pill on URL change, re-run boot after page settles
 if (window.__sq_nav_observer) window.__sq_nav_observer.disconnect();
 let lastUrl = location.href;
 const navObserver = new MutationObserver(() => {
@@ -1960,7 +2074,7 @@ const navObserver = new MutationObserver(() => {
 window.__sq_nav_observer = navObserver;
 navObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
 
-// Cross-tab sync — react immediately when pill state changes in another tab
+// Cross-tab sync â€” react immediately when pill state changes in another tab
 if (!window.__sq_storage_listener) {
   window.__sq_storage_listener = true;
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -1971,7 +2085,7 @@ if (!window.__sq_storage_listener) {
   });
 }
 
-// Icon click toggle — saves state so all tabs stay in sync
+// Icon click toggle â€” saves state so all tabs stay in sync
 window.__sq_toggle = async (on) => {
   if (on) await pillOn(true);
   else pillOff(true);
@@ -1997,7 +2111,7 @@ if (!window.__sq_toggle_registered) {
     const d = document.createElement("div");
     d.id = "__scoutiq__";
     d.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:2147483647;background:#c00;color:#fff;padding:10px 14px;border-radius:12px;font:13px/1.4 sans-serif;max-width:320px;word-break:break-word;";
-    d.textContent = "⚡ ScoutIQ init error: " + e.message;
+    d.textContent = "âš¡ ScoutIQ init error: " + e.message;
     document.body.appendChild(d);
   };
 }
