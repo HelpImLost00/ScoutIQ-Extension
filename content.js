@@ -2047,8 +2047,10 @@ function pillOff(saveState = false) {
 }
 
 async function pillOn(saveState = false) {
+  console.log("[SQ content] pillOn called, injected:", injected);
   if (injected) return;
   session = await loadSession();
+  console.log("[SQ content] calling inject, session:", !!session);
   inject(null);
   if (saveState) chrome.storage.local.set({ sq_pill_active: true });
   chrome.runtime.sendMessage({ type: "sq_pill_state", active: true }).catch(() => {});
@@ -2099,6 +2101,7 @@ if (!window.__sq_msg_listener) {
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "sq_toggle") {
       const isOn = !!document.getElementById("__scoutiq__");
+      console.log("[SQ content] sq_toggle received, isOn:", isOn, "injected:", injected, "__sq_toggle:", typeof window.__sq_toggle);
       if (window.__sq_toggle) window.__sq_toggle(!isOn);
       sendResponse({ ok: true });
       return true;
