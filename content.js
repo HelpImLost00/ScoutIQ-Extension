@@ -450,7 +450,9 @@ function $(id) { return shadow ? shadow.querySelector("#" + id) : null; }
 // â”€â”€â”€ Session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSession() {
   return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve(null), 3000); // never hang
     chrome.storage.local.get(["sb_session"], async (r) => {
+      clearTimeout(timeout);
       const s = r.sb_session;
       if (!s) return resolve(null);
       // Token still valid (with 60s buffer)
@@ -2049,9 +2051,9 @@ function pillOff(saveState = false) {
 async function pillOn(saveState = false) {
   console.log("[SQ content] pillOn called, injected:", injected);
   if (injected) return;
-  session = await loadSession();
-  console.log("[SQ content] calling inject, session:", !!session);
-  inject(null);
+  inject(null); // show pill immediately — no blocking wait
+  session = await loadSession(); // load session in background; auth UI updates when panel opens
+  console.log("[SQ content] session loaded:", !!session);
   if (saveState) chrome.storage.local.set({ sq_pill_active: true });
   chrome.runtime.sendMessage({ type: "sq_pill_state", active: true }).catch(() => {});
 }
