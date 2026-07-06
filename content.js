@@ -131,7 +131,7 @@ function extractName() {
   if (h1?.textContent?.trim().length > 5) return h1.textContent.trim();
 
   // Page title, strip store name suffix
-  return document.title.split(/\s*[\|Ã¢â‚¬"\-]\s*/)[0].trim();
+  return document.title.split(/\s*[\|—\-]\s*/)[0].trim();
 }
 
 function extractPrice() {
@@ -178,7 +178,7 @@ function extractPrice() {
   for (const sel of priceSelectors) {
     const el = document.querySelector(sel);
     const txt = el?.getAttribute("content") || el?.getAttribute("data-price") || el?.textContent?.trim();
-    if (txt && /\$|Â£|â‚¬|\d/.test(txt)) return txt.slice(0, 20);
+    if (txt && /\$|£|€|\d/.test(txt)) return txt.slice(0, 20);
   }
   return null;
 }
@@ -201,7 +201,7 @@ function extractImage() {
 function cleanName(name) {
   if (!name) return null;
   return name
-    .replace(/\s*[\|Ã¢â‚¬"\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
+    .replace(/\s*[\|—\-]\s*(Amazon|Walmart|Best Buy|Target|eBay|Newegg|Etsy|Costco|Shop|Store|Buy|Online).*$/i, "")
     .replace(/\s*:\s*Amazon\.com.*$/i, "")
     .trim()
     .slice(0, 200);
@@ -310,7 +310,7 @@ const CSS = `
   .sq-result-price { font-size: 13px; font-weight: 700; color: #f0f0f0; flex-shrink: 0; }
   .sq-result-wrap.sq-best .sq-result-price { color: #34d399; }
   .sq-best-label { font-size: 8px; font-weight: 700; color: #34d399; border: 1px solid rgba(5,40,22,0.4); padding: 1px 4px; border-radius: 3px; flex-shrink: 0; }
-  .sq-track-section { margin-top: 9px; padding-top: 9px; border-top: 1px solid #1e1e1e; }
+  .sq-track-section { margin-bottom: 9px; padding-bottom: 9px; border-bottom: 1px solid #1e1e1e; }
   .sq-btn-track { width: 100%; padding: 8px; border-radius: 7px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; background: #7c3aed; color: #fff; transition: background 0.15s; }
   .sq-btn-track:hover { background: #6d28d9; }
   .sq-btn-track:disabled { cursor: default; }
@@ -350,8 +350,8 @@ const HTML = `
       <div class="sq-header" id="sq-header" draggable="false">
         <a class="sq-logo" id="sq-logo-link" href="${SCOUTIQ_URL}/dashboard" target="_blank" rel="noopener"><div class="sq-logo-icon">⚡</div>ScoutIQ</a>
         <span class="sq-version">v1.4</span>
-        <button class="sq-gear-btn" id="sq-gear-btn" title="Settings">âš™</button>
-        <button class="sq-close" id="sq-close">âœ•</button>
+        <button class="sq-gear-btn" id="sq-gear-btn" title="Settings">&#9881;</button>
+        <button class="sq-close" id="sq-close">&#10005;</button>
       </div>
       <div class="sq-settings" id="sq-settings-body" style="display:none">
         <div class="sq-settings-row">
@@ -382,7 +382,7 @@ const HTML = `
           </div>
           <select id="sq-read-anim-select" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #333;border-radius:6px;padding:3px 6px;font-size:11px;cursor:pointer;outline:none;">
             <option value="chomp">Chomp ðŸ'¾</option>
-            <option value="absorb">Absorb âœ¨</option>
+            <option value="absorb">Absorb </option>
             <option value="wand">Wand ðŸª„</option>
             <option value="focus">Focus brackets</option>
             <option value="scanline">Scan line</option>
@@ -412,14 +412,14 @@ const HTML = `
             <div class="sq-product-price" id="sq-product-price"></div>
           </div>
         </div>
+        <div class="sq-track-section" id="sq-track-section" style="display:none">
+          <button class="sq-btn-track" id="sq-btn-track">Add to Cart</button>
+          <div class="sq-hint" id="sq-hint"></div>
+        </div>
         <div class="sq-section-label" id="sq-section-lbl">PRICES ACROSS THE WEB</div>
         <div class="sq-spinner" id="sq-spinner"></div>
         <div class="sq-results" id="sq-results" style="display:none"></div>
         <div class="sq-error" id="sq-error" style="display:none"></div>
-        <div class="sq-track-section" id="sq-track-section" style="display:none">
-          <button class="sq-btn-track" id="sq-btn-track">🛒 Add to cart</button>
-          <div class="sq-hint" id="sq-hint"></div>
-        </div>
         <div class="sq-auth" id="sq-auth" style="display:none">
           <div class="sq-auth-title">Sign in to track prices</div>
           <div class="sq-field"><label>Email</label><input type="email" id="sq-email" placeholder="you@email.com" /></div>
@@ -546,12 +546,11 @@ async function fetchPrices() {
   $("sq-spinner").style.display = "";
   $("sq-results").style.display = "none";
   $("sq-error").style.display = "none";
-  $("sq-track-section").style.display = "none";
 
   // Show "waking up" hint after 4s — Render free tier cold starts take up to 45s
   const wakeHint = setTimeout(() => {
     const err = $("sq-error");
-    if (err) { err.textContent = "Waking up price serverâ€¦ this takes ~30s on first use."; err.style.display = ""; }
+    if (err) { err.textContent = "Waking up price server... this takes ~30s on first use."; err.style.display = ""; }
   }, 4000);
 
   const controller = new AbortController();
