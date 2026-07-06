@@ -302,7 +302,8 @@ const CSS = `
   .sq-result-wrap:hover .sq-atc-overlay { opacity: 1; pointer-events: auto; }
   .sq-atc-btn { background: #7c3aed; color: #fff; border: none; border-radius: 6px; padding: 5px 13px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.12s, transform 0.1s; letter-spacing: 0.01em; }
   .sq-atc-btn:hover { background: #6d28d9; transform: scale(1.04); }
-  .sq-atc-btn.sq-atc-added { background: #059669; cursor: default; }
+  .sq-view-link { color: #34d399; font-size: 11px; font-weight: 700; text-decoration: none; padding: 5px 12px; border-radius: 6px; border: 1px solid #05966944; background: #052e1a; letter-spacing: 0.01em; }
+  .sq-view-link:hover { text-decoration: underline; background: #064e2a; }
   .sq-badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; flex-shrink: 0; }
   .sq-badge-amazon { background: rgba(245,158,11,0.15); color: #f59e0b; }
   .sq-badge-walmart { background: rgba(59,130,246,0.15); color: #60a5fa; }
@@ -641,8 +642,10 @@ async function addResultToCart(r, btn) {
       btn.textContent = "🛒 Add to cart";
       return;
     }
-    btn.textContent = "✓ Added!";
-    btn.className = "sq-atc-btn sq-atc-added";
+    // Swap button for a "View" link — prevents double-add
+    const overlay = btn.closest(".sq-atc-overlay");
+    overlay.innerHTML = `<a class="sq-view-link" href="${r.url}" target="_blank" rel="noopener">View at ${r.retailer} ↗</a>`;
+    overlay.querySelector(".sq-view-link").addEventListener("click", (e) => e.stopPropagation());
   } catch {
     btn.disabled = false;
     btn.textContent = "🛒 Add to cart";
