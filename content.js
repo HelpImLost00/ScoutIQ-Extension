@@ -614,16 +614,16 @@ function updateTrackBtn() {
   const btn = $("sq-btn-track");
   if (!btn) return;
   if (!session) {
-    btn.textContent = "🛒 Add to cart";
+    btn.textContent = "Log in to ScoutIQ";
     btn.disabled = false;
     btn.className = "sq-btn-track";
-    $("sq-hint").innerHTML = `<a href="${SCOUTIQ_URL}/signup" target="_blank">Sign in or create a free account</a>`;
+    $("sq-hint").textContent = "";
   }
 }
 
 async function handleTrack() {
   if (!productInfo) return;
-  if (!session) { $("sq-auth").style.display = ""; $("sq-email").focus(); return; }
+  if (!session) { window.open(`${SCOUTIQ_URL}/login`, "_blank", "noopener"); return; }
   const btn = $("sq-btn-track");
   btn.disabled = true; btn.textContent = "Adding…";
   // Use best compare result if available, otherwise fall back to current page data
