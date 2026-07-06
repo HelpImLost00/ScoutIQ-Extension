@@ -71,7 +71,7 @@ function isProductPage() {
   // Product-specific URL identifier segment
   if (/\/(dp|ip|itm|product|item|pd|sku|goods|detail|listing)\/[a-zA-Z0-9]/.test(path)) return true;
 
-  // Single h1 + price + add-to-cart = very strong product page signal
+  // Single h1 + price element = strong product page signal (no button scan — too expensive)
   const h1Count = document.querySelectorAll("h1").length;
   const hasPrice = !!(
     document.querySelector('[itemprop="price"]') ||
@@ -79,10 +79,7 @@ function isProductPage() {
     document.querySelector('[class*="current-price" i]') ||
     document.querySelector('[class*="ProductPrice" i]')
   );
-  const atcText = ["add to cart", "add to bag", "buy now", "add to basket"];
-  const hasAtc = [...document.querySelectorAll("button, [role=button]")]
-    .some(btn => atcText.some(t => (btn.textContent || "").toLowerCase().includes(t)));
-  if (h1Count === 1 && hasPrice && hasAtc) return true;
+  if (h1Count === 1 && hasPrice) return true;
 
   return false;
 }
@@ -618,6 +615,10 @@ function updateTrackBtn() {
     btn.disabled = false;
     btn.className = "sq-btn-track";
     $("sq-hint").textContent = "";
+  } else if (!btn.classList.contains("sq-tracked")) {
+    btn.textContent = "Add to Cart";
+    btn.disabled = false;
+    btn.className = "sq-btn-track";
   }
 }
 
@@ -2013,6 +2014,7 @@ async function pillOn(saveState = false) {
   if (injected) return;
   inject(null); // show pill immediately — no blocking wait
   session = await loadSession(); // load session in background; auth UI updates when panel opens
+  updateTrackBtn(); // refresh button now that session is known
   console.log("[SQ content] session loaded:", !!session);
   if (saveState) chrome.storage.local.set({ sq_pill_active: true });
   chrome.runtime.sendMessage({ type: "sq_pill_state", active: true }).catch(() => {});
@@ -2028,17 +2030,16 @@ async function boot() {
   await pillOn();
 }
 
-// SPA navigation — hide pill on URL change, re-run boot after page settles
-if (window.__sq_nav_observer) window.__sq_nav_observer.disconnect();
+// SPA navigation — poll URL every 500ms instead of MutationObserver(subtree:true)
+// which fires thousands of times per second on heavy pages like Amazon.
+if (window.__sq_nav_interval) clearInterval(window.__sq_nav_interval);
 let lastUrl = location.href;
-const navObserver = new MutationObserver(() => {
+window.__sq_nav_interval = setInterval(() => {
   if (location.href === lastUrl) return;
   lastUrl = location.href;
-  pillOff(); // hide without clearing sq_pill_active
+  pillOff();
   setTimeout(boot, 300);
-});
-window.__sq_nav_observer = navObserver;
-navObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+}, 500);
 
 // Cross-tab sync — react immediately when pill state changes in another tab
 if (!window.__sq_storage_listener) {
