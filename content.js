@@ -298,12 +298,6 @@ const CSS = `
   .sq-result-wrap { position: relative; display: flex; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 7px; border: 1px solid #1e1e1e; background: #141414; color: inherit; transition: border-color 0.12s, background 0.12s; cursor: pointer; overflow: hidden; }
   .sq-result-wrap:hover { border-color: #7c3aed44; background: #1a1220; }
   .sq-result-wrap.sq-best { border-color: #059669; background: #052e1a; }
-  .sq-atc-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,0,24,0.78); opacity: 0; transition: opacity 0.14s; border-radius: 6px; pointer-events: none; }
-  .sq-result-wrap:hover .sq-atc-overlay { opacity: 1; pointer-events: auto; }
-  .sq-atc-btn { background: #7c3aed; color: #fff; border: none; border-radius: 6px; padding: 5px 13px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.12s, transform 0.1s; letter-spacing: 0.01em; }
-  .sq-atc-btn:hover { background: #6d28d9; transform: scale(1.04); }
-  .sq-view-link { color: #34d399; font-size: 11px; font-weight: 700; text-decoration: none; padding: 5px 12px; border-radius: 6px; border: 1px solid #05966944; background: #052e1a; letter-spacing: 0.01em; }
-  .sq-view-link:hover { text-decoration: underline; background: #064e2a; }
   .sq-badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; flex-shrink: 0; }
   .sq-badge-amazon { background: rgba(245,158,11,0.15); color: #f59e0b; }
   .sq-badge-walmart { background: rgba(59,130,246,0.15); color: #60a5fa; }
@@ -606,17 +600,8 @@ function renderResults() {
       <span class="sq-result-name">${r.name.slice(0, 45)}</span>
       ${isBest ? '<span class="sq-best-label">BEST</span>' : ""}
       <span class="sq-result-price">${fmtPrice(r.price)}</span>
-      <div class="sq-atc-overlay"><button class="sq-atc-btn">🛒 Add to cart</button></div>
     `;
-    // Clicking the row (not the overlay) opens the product URL
-    wrap.addEventListener("click", (e) => {
-      if (!e.target.closest(".sq-atc-overlay")) window.open(r.url, "_blank", "noopener");
-    });
-    // Per-row add to cart
-    wrap.querySelector(".sq-atc-btn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      addResultToCart(r, e.currentTarget);
-    });
+    wrap.addEventListener("click", () => window.open(r.url, "_blank", "noopener"));
     list.appendChild(wrap);
   });
   list.style.display = "flex";
@@ -624,33 +609,6 @@ function renderResults() {
   updateTrackBtn();
 }
 
-async function addResultToCart(r, btn) {
-  if (!session) { $("sq-auth").style.display = ""; $("sq-email").focus(); return; }
-  btn.disabled = true;
-  btn.textContent = "Adding…";
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_products`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ user_id: session.user.id, product_name: r.name, url: r.url, retailer: r.retailer, current_price: r.price, currency: "USD", drop_threshold_pct: 5, scrape_status: "pending" }),
-    });
-    if (res.status === 401) {
-      session = null;
-      chrome.storage.local.remove("sb_session");
-      $("sq-auth").style.display = "";
-      btn.disabled = false;
-      btn.textContent = "🛒 Add to cart";
-      return;
-    }
-    // Swap button for a "View" link — prevents double-add
-    const overlay = btn.closest(".sq-atc-overlay");
-    overlay.innerHTML = `<a class="sq-view-link" href="${r.url}" target="_blank" rel="noopener">View at ${r.retailer} ↗</a>`;
-    overlay.querySelector(".sq-view-link").addEventListener("click", (e) => e.stopPropagation());
-  } catch {
-    btn.disabled = false;
-    btn.textContent = "🛒 Add to cart";
-  }
-}
 
 // â"€â"€â"€ Track â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 function updateTrackBtn() {
