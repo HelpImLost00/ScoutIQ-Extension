@@ -27,10 +27,17 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
-// ── Listen for pill state from content script ─────────────────────────────────
-chrome.runtime.onMessage.addListener((msg, sender) => {
+// ── Listen for pill state and lazy GSAP injection ────────────────────────────
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "sq_pill_state" && sender.tab?.id != null) {
     setBadge(sender.tab.id, msg.active);
+    return;
+  }
+  if (msg.type === "sq_inject_gsap" && sender.tab?.id != null) {
+    chrome.scripting.executeScript({ target: { tabId: sender.tab.id }, files: ["gsap.min.js"] })
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
+    return true; // async response
   }
 });
 

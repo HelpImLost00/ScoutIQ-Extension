@@ -437,6 +437,20 @@ let compareResults = [];
 let session = null;
 let injected = false;
 
+// GSAP is NOT loaded on page startup — inject it lazily on first drag animation.
+let _gsapPromise = null;
+function ensureGsap() {
+  if (typeof gsap !== "undefined") return Promise.resolve();
+  if (_gsapPromise) return _gsapPromise;
+  _gsapPromise = new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "sq_inject_gsap" }, (resp) => {
+      if (resp?.ok) resolve();
+      else { console.warn("[SQ] GSAP injection failed"); resolve(); }
+    });
+  });
+  return _gsapPromise;
+}
+
 function $(id) { return shadow ? shadow.querySelector("#" + id) : null; }
 
 // â"€â"€â"€ Session â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
@@ -801,7 +815,8 @@ let _readImgStyle = "chomp";
 let _trailStyle = "dots";
 
 // â"€â"€â"€ Elaborate chomp: pill splits, grows, flies at image, snaps shut â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
-function playChompElaborate(imgEl, onReady) {
+async function playChompElaborate(imgEl, onReady) {
+  await ensureGsap();
   const imgRect = imgEl.getBoundingClientRect();
   if (imgRect.width < 20 || imgRect.height < 20) { onReady(); return; }
 
