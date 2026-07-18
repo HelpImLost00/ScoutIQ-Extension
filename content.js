@@ -223,6 +223,11 @@ const CSS = `
     position: fixed; bottom: 20px; right: 20px; z-index: 2147483647;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 13px; line-height: 1.4;
+    /* Own compositor layer — pill repaints never touch the page, and page
+       repaints never slow the pill. Critical on heavy pages like Amazon. */
+    will-change: transform;
+    transform: translateZ(0);
+    contain: layout style;
   }
   #sq-pill {
     display: flex; align-items: center;
@@ -241,13 +246,13 @@ const CSS = `
   }
   /* â"€â"€ Micro interaction: attention glow pulse (plays once after entrance) â"€â"€ */
   @keyframes sq-glow-pulse {
-    0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
-    50%       { box-shadow: 0 4px 32px rgba(124,58,237,0.9), 0 0 0 6px rgba(124,58,237,0.15); }
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.8; }
   }
-  /* â"€â"€ Micro interaction: subtle breathe (continuous, low-key) â"€â"€ */
+  /* â"€â"€ Micro interaction: subtle breathe (GPU opacity only, zero paint cost) â"€â"€ */
   @keyframes sq-breathe {
-    0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
-    50%       { box-shadow: 0 4px 26px rgba(124,58,237,0.65); }
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.88; }
   }
   #sq-pill.sq-anim-pop     { animation: sq-pop-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
   #sq-pill.sq-anim-glow    { animation: sq-glow-pulse 0.7s ease-in-out 2; }
